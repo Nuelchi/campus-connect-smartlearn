@@ -13,6 +13,7 @@ export default function DashboardRouter() {
   const { user, loading, role } = useAuth();
   const navigate = useNavigate();
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [roleCheckComplete, setRoleCheckComplete] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -22,11 +23,15 @@ export default function DashboardRouter() {
     // Mark initial load as complete only when we're not loading anymore
     if (!loading) {
       setInitialLoadComplete(true);
+      // Give a small delay to ensure role is fetched
+      setTimeout(() => {
+        setRoleCheckComplete(true);
+      }, 100);
     }
   }, [user, loading, navigate]);
 
-  // Show loading during initial auth check or while role is being fetched
-  if (loading || !initialLoadComplete) {
+  // Show loading during initial auth check, role fetch, or while role is being determined
+  if (loading || !initialLoadComplete || (user && !roleCheckComplete)) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-lg font-semibold animate-pulse">Loading Dashboard...</div>

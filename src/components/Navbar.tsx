@@ -1,5 +1,5 @@
 
-import { Book, User, MessageSquare } from "lucide-react";
+import { Book } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const Navbar = () => {
@@ -20,7 +20,6 @@ const Navbar = () => {
       <div className="flex gap-4 items-center">
         <Link to="/login" className="bg-primary px-4 py-2 rounded-md text-white font-semibold shadow hover:scale-105 hover:bg-primary/90 transition-transform">Login</Link>
         <Link to="/register" className="border border-primary px-4 py-2 rounded-md font-semibold text-primary hover:bg-primary/5 transition-colors">Register</Link>
-        <Link to="/admin-login" className="ml-2 text-muted-foreground text-sm underline decoration-dotted hover:text-primary/70" title="Admin panel login (restricted)">Admin</Link>
       </div>
     </nav>
   );

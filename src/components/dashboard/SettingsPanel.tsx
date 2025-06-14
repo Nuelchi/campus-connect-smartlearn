@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { User, Bell, Shield, Save } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User, Bell, Shield, Save, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 
 export default function SettingsPanel() {
-  const { user, profile } = useAuth();
+  const { user, profile, role } = useAuth();
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState({
     first_name: "",
@@ -70,11 +71,55 @@ export default function SettingsPanel() {
     });
   };
 
+  const getDisplayName = () => {
+    if (profileData.first_name && profileData.last_name) {
+      return `${profileData.first_name} ${profileData.last_name}`;
+    }
+    return user?.email?.split('@')[0] || "User";
+  };
+
+  const getInitials = () => {
+    if (profileData.first_name && profileData.last_name) {
+      return `${profileData.first_name[0]}${profileData.last_name[0]}`.toUpperCase();
+    }
+    return user?.email?.[0]?.toUpperCase() || "U";
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Settings</h2>
 
       <div className="grid gap-6">
+        {/* Profile Overview */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Profile Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-center gap-6">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={profileData.avatar_url} />
+                <AvatarFallback className="text-lg">{getInitials()}</AvatarFallback>
+              </Avatar>
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold">{getDisplayName()}</h3>
+                <p className="text-muted-foreground">{user?.email}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm px-2 py-1 bg-primary/10 text-primary rounded-md capitalize">
+                    {role || "User"}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    Member since {new Date(user?.created_at || "").toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Profile Settings */}
         <Card>
           <CardHeader>
@@ -114,6 +159,45 @@ export default function SettingsPanel() {
             <Button onClick={saveProfile} disabled={loading}>
               <Save className="mr-2 h-4 w-4" />
               {loading ? "Saving..." : "Save Profile"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Account Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Account Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Email Address</Label>
+                <Input value={user?.email || ""} disabled />
+              </div>
+              <div>
+                <Label>User ID</Label>
+                <Input value={user?.id || ""} disabled className="font-mono text-xs" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Account Role</Label>
+                <Input value={role || "User"} disabled className="capitalize" />
+              </div>
+              <div>
+                <Label>Email Confirmed</Label>
+                <Input 
+                  value={user?.email_confirmed_at ? "Yes" : "No"} 
+                  disabled 
+                  className={user?.email_confirmed_at ? "text-green-600" : "text-orange-600"}
+                />
+              </div>
+            </div>
+            <Button variant="outline" onClick={changePassword}>
+              Change Password
             </Button>
           </CardContent>
         </Card>
@@ -167,25 +251,6 @@ export default function SettingsPanel() {
                 }
               />
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Security Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Security
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Email</Label>
-              <Input value={user?.email || ""} disabled />
-            </div>
-            <Button variant="outline" onClick={changePassword}>
-              Change Password
-            </Button>
           </CardContent>
         </Card>
       </div>

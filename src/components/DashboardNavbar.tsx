@@ -1,9 +1,10 @@
 
-import { Bell, Moon, Sun, Search } from "lucide-react";
+import { Moon, Sun, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useState, useEffect } from "react";
+import NotificationDropdown from "./dashboard/NotificationDropdown";
 
 interface DashboardNavbarProps {
   title: string;
@@ -71,10 +72,7 @@ export default function DashboardNavbar({ title, subtitle }: DashboardNavbarProp
           </Button>
 
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <Bell className="h-4 w-4" />
-            <span className="sr-only">Notifications</span>
-          </Button>
+          <NotificationDropdown />
         </div>
       </div>
     </header>

@@ -2,6 +2,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MessagingCenter from "./MessagingCenter";
 import Gradebook from "./Gradebook";
+import SettingsPanel from "@/components/dashboard/SettingsPanel";
+import NotificationCenter from "@/components/dashboard/NotificationCenter";
 
 interface TeacherSectionRendererProps {
   section: string | null;
@@ -58,16 +60,7 @@ export default function TeacherSectionRenderer({ section }: TeacherSectionRender
         </Card>
       );
     case "notifications":
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Notification center coming soon...</p>
-          </CardContent>
-        </Card>
-      );
+      return <NotificationCenter />;
     case "help":
       return (
         <Card>
@@ -81,16 +74,7 @@ export default function TeacherSectionRenderer({ section }: TeacherSectionRender
       );
     case "settings":
     case "account":
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle>Settings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Settings panel coming soon...</p>
-          </CardContent>
-        </Card>
-      );
+      return <SettingsPanel />;
     default:
       return null;
   }

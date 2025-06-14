@@ -7,10 +7,15 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import DashboardStats from "@/components/DashboardStats";
 import CourseManagement from "@/components/CourseManagement";
+import AssignmentManagement from "@/components/dashboard/AssignmentManagement";
+import StudentManagement from "@/components/dashboard/StudentManagement";
+import NotificationCenter from "@/components/dashboard/NotificationCenter";
+import SettingsPanel from "@/components/dashboard/SettingsPanel";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function TeacherDashboard() {
   const { signOut, user } = useAuth();
+  const [activeSection, setActiveSection] = useState("dashboard");
   const [stats, setStats] = useState({
     totalCourses: 0,
     totalStudents: 0,
@@ -62,62 +67,20 @@ export default function TeacherDashboard() {
     fetchStats();
   }, [user]);
 
-  return (
-    <div className="flex h-screen bg-muted/40">
-      {/* Sidebar */}
-      <aside className="bg-background border-r w-64 p-6 flex flex-col">
-        <div className="flex items-center gap-2 mb-8">
-          <Book className="text-primary" />
-          <span className="font-bold text-xl">Teacher Panel</span>
-        </div>
-        
-        <nav className="space-y-2 flex-1">
-          <Button variant="ghost" className="w-full justify-start">
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            Dashboard
-          </Button>
-          <Button variant="ghost" className="w-full justify-start">
-            <Book className="mr-2 h-4 w-4" />
-            My Courses
-          </Button>
-          <Button variant="ghost" className="w-full justify-start">
-            <Users className="mr-2 h-4 w-4" />
-            Students
-          </Button>
-          <Button variant="ghost" className="w-full justify-start">
-            <FileText className="mr-2 h-4 w-4" />
-            Assignments
-          </Button>
-          <Button variant="ghost" className="w-full justify-start">
-            <Bell className="mr-2 h-4 w-4" />
-            Notifications
-          </Button>
-          <Button variant="ghost" className="w-full justify-start">
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Button>
-        </nav>
-        
-        <Button onClick={signOut} variant="outline" className="w-full mt-4">
-          Sign Out
-        </Button>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 p-8 overflow-auto">
-        <div className="space-y-8">
-          {/* Header */}
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Teacher Dashboard</h1>
-            <p className="text-muted-foreground">
-              Manage your courses, track student progress, and create engaging content.
-            </p>
-          </div>
-
-          {/* Stats */}
-          <DashboardStats role="teacher" stats={stats} />
-
-          {/* Tabs */}
+  const renderContent = () => {
+    switch (activeSection) {
+      case "courses":
+        return <CourseManagement />;
+      case "students":
+        return <StudentManagement />;
+      case "assignments":
+        return <AssignmentManagement userRole="teacher" />;
+      case "notifications":
+        return <NotificationCenter />;
+      case "settings":
+        return <SettingsPanel />;
+      default:
+        return (
           <Tabs defaultValue="overview" className="space-y-6">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -177,27 +140,101 @@ export default function TeacherDashboard() {
             </TabsContent>
 
             <TabsContent value="students">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Student Management</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Student management functionality coming soon...</p>
-                </CardContent>
-              </Card>
+              <StudentManagement />
             </TabsContent>
 
             <TabsContent value="assignments">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Assignment Management</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Assignment management functionality coming soon...</p>
-                </CardContent>
-              </Card>
+              <AssignmentManagement userRole="teacher" />
             </TabsContent>
           </Tabs>
+        );
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-muted/40">
+      {/* Sidebar */}
+      <aside className="bg-background border-r w-64 p-6 flex flex-col">
+        <div className="flex items-center gap-2 mb-8">
+          <Book className="text-primary" />
+          <span className="font-bold text-xl">Teacher Panel</span>
+        </div>
+        
+        <nav className="space-y-2 flex-1">
+          <Button 
+            variant={activeSection === "dashboard" ? "default" : "ghost"} 
+            className="w-full justify-start"
+            onClick={() => setActiveSection("dashboard")}
+          >
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Dashboard
+          </Button>
+          <Button 
+            variant={activeSection === "courses" ? "default" : "ghost"} 
+            className="w-full justify-start"
+            onClick={() => setActiveSection("courses")}
+          >
+            <Book className="mr-2 h-4 w-4" />
+            My Courses
+          </Button>
+          <Button 
+            variant={activeSection === "students" ? "default" : "ghost"} 
+            className="w-full justify-start"
+            onClick={() => setActiveSection("students")}
+          >
+            <Users className="mr-2 h-4 w-4" />
+            Students
+          </Button>
+          <Button 
+            variant={activeSection === "assignments" ? "default" : "ghost"} 
+            className="w-full justify-start"
+            onClick={() => setActiveSection("assignments")}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Assignments
+          </Button>
+          <Button 
+            variant={activeSection === "notifications" ? "default" : "ghost"} 
+            className="w-full justify-start"
+            onClick={() => setActiveSection("notifications")}
+          >
+            <Bell className="mr-2 h-4 w-4" />
+            Notifications
+          </Button>
+          <Button 
+            variant={activeSection === "settings" ? "default" : "ghost"} 
+            className="w-full justify-start"
+            onClick={() => setActiveSection("settings")}
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </Button>
+        </nav>
+        
+        <Button onClick={signOut} variant="outline" className="w-full mt-4">
+          Sign Out
+        </Button>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 p-8 overflow-auto">
+        <div className="space-y-8">
+          {/* Header */}
+          {activeSection === "dashboard" && (
+            <>
+              <div>
+                <h1 className="text-3xl font-bold mb-2">Teacher Dashboard</h1>
+                <p className="text-muted-foreground">
+                  Manage your courses, track student progress, and create engaging content.
+                </p>
+              </div>
+              {/* Stats */}
+              <DashboardStats role="teacher" stats={stats} />
+            </>
+          )}
+
+          {/* Content */}
+          {renderContent()}
         </div>
       </main>
     </div>

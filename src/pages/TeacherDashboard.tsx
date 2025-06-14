@@ -81,72 +81,81 @@ export default function TeacherDashboard() {
         return <SettingsPanel />;
       default:
         return (
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="courses">My Courses</TabsTrigger>
-              <TabsTrigger value="students">Students</TabsTrigger>
-              <TabsTrigger value="assignments">Assignments</TabsTrigger>
-            </TabsList>
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Teacher Dashboard</h1>
+              <p className="text-muted-foreground">
+                Manage your courses, track student progress, and create engaging content.
+              </p>
+            </div>
+            <DashboardStats role="teacher" stats={stats} />
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="courses">My Courses</TabsTrigger>
+                <TabsTrigger value="students">Students</TabsTrigger>
+                <TabsTrigger value="assignments">Assignments</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Recent Activity</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm">New student enrolled in Mathematics 101</span>
+              <TabsContent value="overview" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Recent Activity</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm">New student enrolled in Mathematics 101</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-sm">Assignment submissions received: 12</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          <span className="text-sm">Upcoming assignment deadline in 2 days</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span className="text-sm">Assignment submissions received: 12</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                        <span className="text-sm">Upcoming assignment deadline in 2 days</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <Button className="w-full justify-start" variant="outline">
-                      <FileText className="mr-2 h-4 w-4" />
-                      Create Assignment
-                    </Button>
-                    <Button className="w-full justify-start" variant="outline">
-                      <Book className="mr-2 h-4 w-4" />
-                      Add Course Material
-                    </Button>
-                    <Button className="w-full justify-start" variant="outline">
-                      <Bell className="mr-2 h-4 w-4" />
-                      Send Announcement
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Quick Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Button className="w-full justify-start" variant="outline">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Create Assignment
+                      </Button>
+                      <Button className="w-full justify-start" variant="outline">
+                        <Book className="mr-2 h-4 w-4" />
+                        Add Course Material
+                      </Button>
+                      <Button className="w-full justify-start" variant="outline">
+                        <Bell className="mr-2 h-4 w-4" />
+                        Send Announcement
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
 
-            <TabsContent value="courses">
-              <CourseManagement />
-            </TabsContent>
+              <TabsContent value="courses">
+                <CourseManagement />
+              </TabsContent>
 
-            <TabsContent value="students">
-              <StudentManagement />
-            </TabsContent>
+              <TabsContent value="students">
+                <StudentManagement />
+              </TabsContent>
 
-            <TabsContent value="assignments">
-              <AssignmentManagement userRole="teacher" />
-            </TabsContent>
-          </Tabs>
+              <TabsContent value="assignments">
+                <AssignmentManagement userRole="teacher" />
+              </TabsContent>
+            </Tabs>
+          </div>
         );
     }
   };
@@ -219,21 +228,6 @@ export default function TeacherDashboard() {
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-auto">
         <div className="space-y-8">
-          {/* Header */}
-          {activeSection === "dashboard" && (
-            <>
-              <div>
-                <h1 className="text-3xl font-bold mb-2">Teacher Dashboard</h1>
-                <p className="text-muted-foreground">
-                  Manage your courses, track student progress, and create engaging content.
-                </p>
-              </div>
-              {/* Stats */}
-              <DashboardStats role="teacher" stats={stats} />
-            </>
-          )}
-
-          {/* Content */}
           {renderContent()}
         </div>
       </main>

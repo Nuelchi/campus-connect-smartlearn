@@ -80,88 +80,97 @@ export default function AdminDashboard() {
         return <SettingsPanel />;
       default:
         return (
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="courses">Courses</TabsTrigger>
-              <TabsTrigger value="users">Users</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            </TabsList>
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+              <p className="text-muted-foreground">
+                Manage your learning management system and monitor platform activity.
+              </p>
+            </div>
+            <DashboardStats role="admin" stats={stats} />
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="courses">Courses</TabsTrigger>
+                <TabsTrigger value="users">Users</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <TabsContent value="overview" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Recent Activity</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm">New course "Advanced Mathematics" created</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-sm">5 new students enrolled today</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          <span className="text-sm">Assignment deadline approaching</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>System Health</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Server Status</span>
+                          <span className="text-green-600 text-sm font-medium">Healthy</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Database</span>
+                          <span className="text-green-600 text-sm font-medium">Connected</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Storage</span>
+                          <span className="text-green-600 text-sm font-medium">Available</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="courses">
+                <CourseManagement />
+              </TabsContent>
+
+              <TabsContent value="users">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Recent Activity</CardTitle>
+                    <CardTitle>User Management</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm">New course "Advanced Mathematics" created</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span className="text-sm">5 new students enrolled today</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                        <span className="text-sm">Assignment deadline approaching</span>
-                      </div>
-                    </div>
+                    <p className="text-muted-foreground">User management functionality coming soon...</p>
                   </CardContent>
                 </Card>
+              </TabsContent>
 
+              <TabsContent value="analytics">
                 <Card>
                   <CardHeader>
-                    <CardTitle>System Health</CardTitle>
+                    <CardTitle>Analytics Dashboard</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Server Status</span>
-                        <span className="text-green-600 text-sm font-medium">Healthy</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Database</span>
-                        <span className="text-green-600 text-sm font-medium">Connected</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Storage</span>
-                        <span className="text-green-600 text-sm font-medium">Available</span>
-                      </div>
-                    </div>
+                    <p className="text-muted-foreground">Advanced analytics coming soon...</p>
                   </CardContent>
                 </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="courses">
-              <CourseManagement />
-            </TabsContent>
-
-            <TabsContent value="users">
-              <Card>
-                <CardHeader>
-                  <CardTitle>User Management</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">User management functionality coming soon...</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="analytics">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Analytics Dashboard</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Advanced analytics coming soon...</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+              </TabsContent>
+            </Tabs>
+          </div>
         );
     }
   };
@@ -234,21 +243,6 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-auto">
         <div className="space-y-8">
-          {/* Header */}
-          {activeSection === "dashboard" && (
-            <>
-              <div>
-                <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-                <p className="text-muted-foreground">
-                  Manage your learning management system and monitor platform activity.
-                </p>
-              </div>
-              {/* Stats */}
-              <DashboardStats role="admin" stats={stats} />
-            </>
-          )}
-
-          {/* Content */}
           {renderContent()}
         </div>
       </main>

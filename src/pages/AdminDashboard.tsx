@@ -10,43 +10,148 @@ import CourseManagement from "@/components/CourseManagement";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import SettingsPanel from "@/components/dashboard/SettingsPanel";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface AdminStats {
+  totalActiveCourses: number;
+  totalStudents: number;
+  totalTeachers: number;
+  totalAssignments: number;
+  totalEnrollments: number;
+  totalSubmissions: number;
+  totalUsers: number;
+}
+
+interface RecentActivity {
+  id: string;
+  type: string;
+  description: string;
+  user_email: string;
+  created_at: string;
+}
 
 export default function AdminDashboard() {
-  const { signOut } = useAuth();
+  const { signOut, user, role } = useAuth();
+  const { toast } = useToast();
   const [activeSection, setActiveSection] = useState("dashboard");
-  const [stats, setStats] = useState({
-    totalCourses: 0,
+  const [stats, setStats] = useState<AdminStats>({
+    totalActiveCourses: 0,
     totalStudents: 0,
+    totalTeachers: 0,
     totalAssignments: 0,
+    totalEnrollments: 0,
+    totalSubmissions: 0,
+    totalUsers: 0,
   });
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (user && role !== 'admin') {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to access the admin dashboard.",
+        variant: "destructive",
+      });
+    }
+  }, [user, role, toast]);
+
+  const fetchAdminStats = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("admin_dashboard_stats")
+        .select("*")
+        .single();
+
+      if (error) {
+        console.error("Error fetching admin stats:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch dashboard statistics.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data) {
+        setStats({
+          totalActiveCourses: data.total_active_courses || 0,
+          totalStudents: data.total_students || 0,
+          totalTeachers: data.total_teachers || 0,
+          totalAssignments: data.total_assignments || 0,
+          totalEnrollments: data.total_enrollments || 0,
+          totalSubmissions: data.total_submissions || 0,
+          totalUsers: data.total_users || 0,
+        });
+      }
+    } catch (error) {
+      console.error("Error in fetchAdminStats:", error);
+    }
+  };
+
+  const fetchRecentActivity = async () => {
+    try {
+      const { data, error } = await supabase.rpc("get_recent_activity", {
+        limit_count: 10,
+      });
+
+      if (error) {
+        console.error("Error fetching recent activity:", error);
+        return;
+      }
+
+      if (data) {
+        setRecentActivity(data);
+      }
+    } catch (error) {
+      console.error("Error in fetchRecentActivity:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchStats = async () => {
-      // Fetch total courses
-      const { count: coursesCount } = await supabase
-        .from("courses")
-        .select("*", { count: "exact", head: true });
-
-      // Fetch total students (users with student role)
-      const { count: studentsCount } = await supabase
-        .from("user_roles")
-        .select("*", { count: "exact", head: true })
-        .eq("role", "student");
-
-      // Fetch total assignments
-      const { count: assignmentsCount } = await supabase
-        .from("assignments")
-        .select("*", { count: "exact", head: true });
-
-      setStats({
-        totalCourses: coursesCount || 0,
-        totalStudents: studentsCount || 0,
-        totalAssignments: assignmentsCount || 0,
-      });
+    const loadDashboardData = async () => {
+      if (!user || role !== 'admin') return;
+      
+      setLoading(true);
+      await Promise.all([fetchAdminStats(), fetchRecentActivity()]);
+      setLoading(false);
     };
 
-    fetchStats();
-  }, []);
+    loadDashboardData();
+
+    // Set up periodic refresh every 30 seconds
+    const interval = setInterval(loadDashboardData, 30000);
+
+    return () => clearInterval(interval);
+  }, [user, role]);
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'course_created':
+        return 'bg-green-500';
+      case 'student_enrolled':
+        return 'bg-blue-500';
+      case 'assignment_created':
+        return 'bg-purple-500';
+      case 'submission_created':
+        return 'bg-yellow-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Less than an hour ago';
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+  };
 
   const renderContent = () => {
     switch (activeSection) {
@@ -87,93 +192,136 @@ export default function AdminDashboard() {
                 Manage your learning management system and monitor platform activity.
               </p>
             </div>
-            <DashboardStats role="admin" stats={stats} />
-            <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList>
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="courses">Courses</TabsTrigger>
-                <TabsTrigger value="users">Users</TabsTrigger>
-                <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              </TabsList>
+            
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="text-muted-foreground">Loading dashboard data...</div>
+              </div>
+            ) : (
+              <>
+                <DashboardStats 
+                  role="admin" 
+                  stats={{
+                    totalCourses: stats.totalActiveCourses,
+                    totalStudents: stats.totalStudents,
+                    totalAssignments: stats.totalAssignments,
+                    totalTeachers: stats.totalTeachers,
+                    totalEnrollments: stats.totalEnrollments,
+                    totalSubmissions: stats.totalSubmissions,
+                    totalUsers: stats.totalUsers,
+                  }} 
+                />
+                
+                <Tabs defaultValue="overview" className="space-y-6">
+                  <TabsList>
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="courses">Courses</TabsTrigger>
+                    <TabsTrigger value="users">Users</TabsTrigger>
+                    <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                  </TabsList>
 
-              <TabsContent value="overview" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Recent Activity</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span className="text-sm">New course "Advanced Mathematics" created</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          <span className="text-sm">5 new students enrolled today</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                          <span className="text-sm">Assignment deadline approaching</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <TabsContent value="overview" className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Recent Activity</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            {recentActivity.length > 0 ? (
+                              recentActivity.map((activity) => (
+                                <div key={activity.id} className="flex items-center gap-3">
+                                  <div className={`w-2 h-2 rounded-full ${getActivityIcon(activity.type)}`}></div>
+                                  <div className="flex-1">
+                                    <span className="text-sm">{activity.description}</span>
+                                    <div className="text-xs text-muted-foreground">
+                                      by {activity.user_email} • {formatTimeAgo(activity.created_at)}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-sm text-muted-foreground">No recent activity</div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>System Health</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Server Status</span>
-                          <span className="text-green-600 text-sm font-medium">Healthy</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Database</span>
-                          <span className="text-green-600 text-sm font-medium">Connected</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Storage</span>
-                          <span className="text-green-600 text-sm font-medium">Available</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>System Health</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">Server Status</span>
+                              <span className="text-green-600 text-sm font-medium">Healthy</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">Database</span>
+                              <span className="text-green-600 text-sm font-medium">Connected</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">Storage</span>
+                              <span className="text-green-600 text-sm font-medium">Available</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">Last Updated</span>
+                              <span className="text-blue-600 text-sm font-medium">Just now</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </TabsContent>
 
-              <TabsContent value="courses">
-                <CourseManagement />
-              </TabsContent>
+                  <TabsContent value="courses">
+                    <CourseManagement />
+                  </TabsContent>
 
-              <TabsContent value="users">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>User Management</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">User management functionality coming soon...</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  <TabsContent value="users">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>User Management</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground">User management functionality coming soon...</p>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
 
-              <TabsContent value="analytics">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Analytics Dashboard</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">Advanced analytics coming soon...</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                  <TabsContent value="analytics">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Analytics Dashboard</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground">Advanced analytics coming soon...</p>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
+              </>
+            )}
           </div>
         );
     }
   };
+
+  // Don't render anything if user is not admin
+  if (role !== 'admin') {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="p-8 rounded-xl bg-background border shadow text-center">
+          <div className="text-2xl font-bold mb-2">Access Denied</div>
+          <div className="text-muted-foreground mb-4">
+            You don't have permission to access the admin dashboard.
+          </div>
+          <Button onClick={signOut}>Sign Out</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-muted/40">

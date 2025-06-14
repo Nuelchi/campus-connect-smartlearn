@@ -400,9 +400,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_dashboard_stats: {
+        Row: {
+          total_active_courses: number | null
+          total_assignments: number | null
+          total_enrollments: number | null
+          total_students: number | null
+          total_submissions: number | null
+          total_teachers: number | null
+          total_users: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_recent_activity: {
+        Args: { limit_count?: number }
+        Returns: {
+          id: string
+          type: string
+          description: string
+          user_email: string
+          created_at: string
+        }[]
+      }
       has_role: {
         Args: {
           _user_id: string

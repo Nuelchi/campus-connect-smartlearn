@@ -1,5 +1,6 @@
 
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -40,6 +41,8 @@ import {
 
 export function AppSidebar() {
   const { user, profile, signOut, role } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
@@ -58,6 +61,11 @@ export function AppSidebar() {
     return user?.email || "User";
   };
 
+  // Navigation handler
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
   // Main navigation items based on role
   const getMainNavItems = () => {
     const commonItems = [
@@ -73,32 +81,32 @@ export function AppSidebar() {
         ...commonItems,
         {
           title: "My Courses",
-          url: "#",
+          url: "/dashboard?tab=courses",
           icon: BookOpen,
         },
         {
           title: "Students",
-          url: "#",
+          url: "/dashboard?section=students",
           icon: Users,
         },
         {
           title: "Assignments",
-          url: "#",
+          url: "/dashboard?section=assignments",
           icon: FileText,
         },
         {
           title: "Gradebook",
-          url: "#",
+          url: "/dashboard?section=gradebook",
           icon: ClipboardList,
         },
         {
           title: "Analytics",
-          url: "#",
+          url: "/dashboard?section=analytics",
           icon: BarChart,
         },
         {
           title: "Calendar",
-          url: "#",
+          url: "/dashboard?section=calendar",
           icon: Calendar,
         },
       ];
@@ -109,22 +117,22 @@ export function AppSidebar() {
         ...commonItems,
         {
           title: "My Courses",
-          url: "#",
+          url: "/dashboard?section=courses",
           icon: BookOpen,
         },
         {
           title: "Assignments",
-          url: "#",
+          url: "/dashboard?section=assignments",
           icon: FileText,
         },
         {
           title: "Grades",
-          url: "#",
+          url: "/dashboard?section=grades",
           icon: Award,
         },
         {
           title: "Calendar",
-          url: "#",
+          url: "/dashboard?section=calendar",
           icon: Calendar,
         },
       ];
@@ -135,22 +143,22 @@ export function AppSidebar() {
         ...commonItems,
         {
           title: "User Management",
-          url: "#",
+          url: "/dashboard?section=users",
           icon: Users,
         },
         {
           title: "Course Management",
-          url: "#",
+          url: "/dashboard?section=courses",
           icon: BookOpen,
         },
         {
           title: "Analytics",
-          url: "#",
+          url: "/dashboard?section=analytics",
           icon: BarChart,
         },
         {
           title: "Settings",
-          url: "#",
+          url: "/dashboard?section=settings",
           icon: Settings,
         },
       ];
@@ -166,22 +174,22 @@ export function AppSidebar() {
         {
           title: "Create Course",
           icon: Plus,
-          onClick: () => console.log("Create course"),
+          onClick: () => handleNavigation("/dashboard?tab=courses&action=create"),
         },
         {
           title: "New Assignment",
           icon: FileText,
-          onClick: () => console.log("New assignment"),
+          onClick: () => handleNavigation("/dashboard?section=assignments&action=create"),
         },
         {
           title: "Grade Papers",
           icon: GraduationCap,
-          onClick: () => console.log("Grade papers"),
+          onClick: () => handleNavigation("/dashboard?section=gradebook"),
         },
         {
           title: "Send Message",
           icon: MessageSquare,
-          onClick: () => console.log("Send message"),
+          onClick: () => handleNavigation("/dashboard?section=messaging"),
         },
       ];
     }
@@ -190,6 +198,14 @@ export function AppSidebar() {
 
   const mainNavItems = getMainNavItems();
   const quickActions = getQuickActions();
+
+  // Check if current path matches the nav item
+  const isActive = (url: string) => {
+    if (url === "/dashboard") {
+      return location.pathname === "/dashboard" && !location.search;
+    }
+    return location.pathname + location.search === url;
+  };
 
   return (
     <Sidebar>
@@ -212,11 +228,12 @@ export function AppSidebar() {
             <SidebarMenu>
               {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </a>
+                  <SidebarMenuButton 
+                    onClick={() => handleNavigation(item.url)}
+                    isActive={isActive(item.url)}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -247,27 +264,21 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href="#">
-                    <Bell className="h-4 w-4" />
-                    <span>Notifications</span>
-                  </a>
+                <SidebarMenuButton onClick={() => handleNavigation("/dashboard?section=notifications")}>
+                  <Bell className="h-4 w-4" />
+                  <span>Notifications</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href="#">
-                    <HelpCircle className="h-4 w-4" />
-                    <span>Help & Support</span>
-                  </a>
+                <SidebarMenuButton onClick={() => handleNavigation("/dashboard?section=help")}>
+                  <HelpCircle className="h-4 w-4" />
+                  <span>Help & Support</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href="#">
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
-                  </a>
+                <SidebarMenuButton onClick={() => handleNavigation("/dashboard?section=settings")}>
+                  <Settings className="h-4 w-4" />
+                  <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -300,7 +311,7 @@ export function AppSidebar() {
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation("/dashboard?section=account")}>
                   <Settings className="mr-2 h-4 w-4" />
                   Account Settings
                 </DropdownMenuItem>

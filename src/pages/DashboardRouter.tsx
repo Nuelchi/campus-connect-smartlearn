@@ -13,6 +13,7 @@ export default function DashboardRouter() {
   const { user, loading, role } = useAuth();
   const navigate = useNavigate();
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [roleCheckAttempted, setRoleCheckAttempted] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -22,11 +23,15 @@ export default function DashboardRouter() {
     // Mark initial load as complete only when we're not loading anymore
     if (!loading) {
       setInitialLoadComplete(true);
+      // Give time for role to be fetched after auth completes
+      setTimeout(() => {
+        setRoleCheckAttempted(true);
+      }, 500);
     }
   }, [user, loading, navigate]);
 
-  // Show loading during initial auth check
-  if (loading || !initialLoadComplete) {
+  // Show loading during initial auth check or while waiting for role check
+  if (loading || !initialLoadComplete || (user && !roleCheckAttempted)) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-lg font-semibold animate-pulse">Loading Dashboard...</div>
@@ -54,9 +59,8 @@ export default function DashboardRouter() {
   if (role === "teacher") return <TeacherDashboard />;
   if (role === "student") return <StudentDashboard />;
 
-  // Only show role selector if user is logged in but truly has no role
-  // Wait a bit longer to ensure role has been fetched before showing selector
-  if (role === null) {
+  // Only show role selector if user is logged in but has no role AND we've actually checked for it
+  if (role === null && roleCheckAttempted) {
     return <RoleSelector />;
   }
 

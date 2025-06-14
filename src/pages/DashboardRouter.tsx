@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,17 +12,39 @@ import RoleSelector from "@/components/RoleSelector";
 export default function DashboardRouter() {
   const { user, loading, role } = useAuth();
   const navigate = useNavigate();
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
     }
+    
+    // Mark initial load as complete only when we're not loading anymore
+    if (!loading) {
+      setInitialLoadComplete(true);
+    }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  // Show loading during initial auth check or while role is being fetched
+  if (loading || !initialLoadComplete) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-lg font-semibold animate-pulse">Loading Dashboard...</div>
+      </div>
+    );
+  }
+
+  // If user is not logged in, redirect to login (handled by useEffect above)
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="p-8 rounded-xl bg-background border shadow text-center">
+          <div className="text-2xl font-bold mb-2">Authentication Required</div>
+          <div className="text-muted-foreground mb-4">
+            Please log in to access your dashboard.
+          </div>
+          <Button onClick={() => navigate("/login")}>Go to Login</Button>
+        </div>
       </div>
     );
   }
@@ -33,20 +55,5 @@ export default function DashboardRouter() {
   if (role === "student" || role === "user") return <StudentDashboard />;
 
   // If user is logged in but has no role, show role selector
-  if (user && !role) {
-    return <RoleSelector />;
-  }
-
-  // Fallback: should not reach here normally
-  return (
-    <div className="flex justify-center items-center min-h-screen">
-      <div className="p-8 rounded-xl bg-background border shadow text-center">
-        <div className="text-2xl font-bold mb-2">Authentication Required</div>
-        <div className="text-muted-foreground mb-4">
-          Please log in to access your dashboard.
-        </div>
-        <Button onClick={() => navigate("/login")}>Go to Login</Button>
-      </div>
-    </div>
-  );
+  return <RoleSelector />;
 }

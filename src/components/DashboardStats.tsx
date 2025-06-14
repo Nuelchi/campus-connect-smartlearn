@@ -45,6 +45,10 @@ interface DashboardStatsProps {
     completionRate?: number;
     enrolledCourses?: number;
     pendingAssignments?: number;
+    totalTeachers?: number;
+    totalEnrollments?: number;
+    totalSubmissions?: number;
+    totalUsers?: number;
   };
 }
 
@@ -67,18 +71,18 @@ export default function DashboardStats({ role, stats }: DashboardStatsProps) {
           trend={{ value: 8, isPositive: true }}
         />
         <StatCard
-          title="Total Assignments"
-          value={stats.totalAssignments || 0}
-          description="Assignments across all courses"
-          icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
-          trend={{ value: 15, isPositive: true }}
+          title="Total Teachers"
+          value={stats.totalTeachers || 0}
+          description="Registered teachers"
+          icon={<Users className="h-4 w-4 text-muted-foreground" />}
+          trend={{ value: 5, isPositive: true }}
         />
         <StatCard
-          title="Platform Activity"
-          value="92%"
-          description="Overall engagement rate"
+          title="Total Users"
+          value={stats.totalUsers || 0}
+          description="All registered users"
           icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
-          trend={{ value: 3, isPositive: true }}
+          trend={{ value: 15, isPositive: true }}
         />
       </div>
     );

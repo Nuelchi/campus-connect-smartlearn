@@ -9,6 +9,7 @@ import DashboardStats from "@/components/DashboardStats";
 import CourseManagement from "@/components/CourseManagement";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import SettingsPanel from "@/components/dashboard/SettingsPanel";
+import DashboardNavbar from "@/components/DashboardNavbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -31,7 +32,7 @@ interface RecentActivity {
 }
 
 export default function AdminDashboard() {
-  const { signOut, user, role } = useAuth();
+  const { user, role } = useAuth();
   const { toast } = useToast();
   const [activeSection, setActiveSection] = useState("dashboard");
   const [stats, setStats] = useState<AdminStats>({
@@ -186,13 +187,6 @@ export default function AdminDashboard() {
       default:
         return (
           <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-              <p className="text-muted-foreground">
-                Manage your learning management system and monitor platform activity.
-              </p>
-            </div>
-            
             {loading ? (
               <div className="text-center py-8">
                 <div className="text-muted-foreground">Loading dashboard data...</div>
@@ -317,83 +311,84 @@ export default function AdminDashboard() {
           <div className="text-muted-foreground mb-4">
             You don't have permission to access the admin dashboard.
           </div>
-          <Button onClick={signOut}>Sign Out</Button>
+          <Button onClick={() => window.location.href = '/login'}>Sign Out</Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-muted/40">
-      {/* Sidebar */}
-      <aside className="bg-background border-r w-64 p-6 flex flex-col">
-        <div className="flex items-center gap-2 mb-8">
-          <Book className="text-primary" />
-          <span className="font-bold text-xl">Admin Panel</span>
-        </div>
-        
-        <nav className="space-y-2 flex-1">
-          <Button 
-            variant={activeSection === "dashboard" ? "default" : "ghost"} 
-            className="w-full justify-start"
-            onClick={() => setActiveSection("dashboard")}
-          >
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            Dashboard
-          </Button>
-          <Button 
-            variant={activeSection === "courses" ? "default" : "ghost"} 
-            className="w-full justify-start"
-            onClick={() => setActiveSection("courses")}
-          >
-            <Book className="mr-2 h-4 w-4" />
-            Courses
-          </Button>
-          <Button 
-            variant={activeSection === "users" ? "default" : "ghost"} 
-            className="w-full justify-start"
-            onClick={() => setActiveSection("users")}
-          >
-            <Users className="mr-2 h-4 w-4" />
-            Users
-          </Button>
-          <Button 
-            variant={activeSection === "analytics" ? "default" : "ghost"} 
-            className="w-full justify-start"
-            onClick={() => setActiveSection("analytics")}
-          >
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Analytics
-          </Button>
-          <Button 
-            variant={activeSection === "notifications" ? "default" : "ghost"} 
-            className="w-full justify-start"
-            onClick={() => setActiveSection("notifications")}
-          >
-            <Bell className="mr-2 h-4 w-4" />
-            Notifications
-          </Button>
-          <Button 
-            variant={activeSection === "settings" ? "default" : "ghost"} 
-            className="w-full justify-start"
-            onClick={() => setActiveSection("settings")}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Button>
-        </nav>
-        
-        <Button onClick={signOut} variant="outline" className="w-full mt-4">
-          Sign Out
-        </Button>
-      </aside>
+    <div className="min-h-screen bg-muted/40">
+      <DashboardNavbar 
+        title="Admin Dashboard" 
+        subtitle="Manage your learning management system and monitor platform activity"
+      />
+      
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className="bg-background border-r w-64 min-h-[calc(100vh-4rem)] p-6 flex flex-col">
+          <div className="flex items-center gap-2 mb-8">
+            <Book className="text-primary" />
+            <span className="font-bold text-xl">Admin Panel</span>
+          </div>
+          
+          <nav className="space-y-2 flex-1">
+            <Button 
+              variant={activeSection === "dashboard" ? "default" : "ghost"} 
+              className="w-full justify-start"
+              onClick={() => setActiveSection("dashboard")}
+            >
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              Dashboard
+            </Button>
+            <Button 
+              variant={activeSection === "courses" ? "default" : "ghost"} 
+              className="w-full justify-start"
+              onClick={() => setActiveSection("courses")}
+            >
+              <Book className="mr-2 h-4 w-4" />
+              Courses
+            </Button>
+            <Button 
+              variant={activeSection === "users" ? "default" : "ghost"} 
+              className="w-full justify-start"
+              onClick={() => setActiveSection("users")}
+            >
+              <Users className="mr-2 h-4 w-4" />
+              Users
+            </Button>
+            <Button 
+              variant={activeSection === "analytics" ? "default" : "ghost"} 
+              className="w-full justify-start"
+              onClick={() => setActiveSection("analytics")}
+            >
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Analytics
+            </Button>
+            <Button 
+              variant={activeSection === "notifications" ? "default" : "ghost"} 
+              className="w-full justify-start"
+              onClick={() => setActiveSection("notifications")}
+            >
+              <Bell className="mr-2 h-4 w-4" />
+              Notifications
+            </Button>
+            <Button 
+              variant={activeSection === "settings" ? "default" : "ghost"} 
+              className="w-full justify-start"
+              onClick={() => setActiveSection("settings")}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </Button>
+          </nav>
+        </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-8 overflow-auto">
-        <div className="space-y-8">
+        {/* Main Content */}
+        <main className="flex-1 p-8 overflow-auto">
           {renderContent()}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

@@ -1,4 +1,3 @@
-
 import { Plus, Users, BookOpen, FileText, BarChart } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import DashboardWelcome from "@/components/dashboard/DashboardWelcome";
@@ -29,44 +28,47 @@ export default function TeacherDashboard() {
     {
       title: "Create Course",
       description: "Add a new course",
-      icon: <Plus className="h-6 w-6" />,
+      icon: <Plus className="h-5 w-5" />,
       onClick: () => {
         const url = new URL(window.location.href);
         url.searchParams.set("tab", "courses");
         url.searchParams.set("action", "create");
         window.history.pushState({}, "", url);
+        window.location.reload();
       },
       variant: "default" as const,
     },
     {
-      title: "Manage Students",
-      description: "View and manage enrolled students",
-      icon: <Users className="h-6 w-6" />,
+      title: "View Students",
+      description: "Manage enrolled students",
+      icon: <Users className="h-5 w-5" />,
       onClick: () => {
         const url = new URL(window.location.href);
         url.searchParams.set("section", "students");
         window.history.pushState({}, "", url);
+        window.location.reload();
       },
     },
     {
-      title: "Create Assignment",
-      description: "Add new assignments",
-      icon: <FileText className="h-6 w-6" />,
+      title: "Grade Assignments",
+      description: "Review and grade work",
+      icon: <FileText className="h-5 w-5" />,
       onClick: () => {
         const url = new URL(window.location.href);
-        url.searchParams.set("section", "assignments");
-        url.searchParams.set("action", "create");
+        url.searchParams.set("section", "gradebook");
         window.history.pushState({}, "", url);
+        window.location.reload();
       },
     },
     {
       title: "View Analytics",
       description: "Check course performance",
-      icon: <BarChart className="h-6 w-6" />,
+      icon: <BarChart className="h-5 w-5" />,
       onClick: () => {
         const url = new URL(window.location.href);
         url.searchParams.set("section", "analytics");
         window.history.pushState({}, "", url);
+        window.location.reload();
       },
     },
   ];

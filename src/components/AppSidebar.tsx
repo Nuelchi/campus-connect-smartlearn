@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -31,12 +30,10 @@ import {
   Settings,
   HelpCircle,
   LogOut,
-  Plus,
-  GraduationCap,
-  Award,
   ClipboardList,
   MessageSquare,
   Bell,
+  GraduationCap,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -100,14 +97,9 @@ export function AppSidebar() {
           icon: ClipboardList,
         },
         {
-          title: "Analytics",
-          url: "/dashboard?section=analytics",
-          icon: BarChart,
-        },
-        {
-          title: "Calendar",
-          url: "/dashboard?section=calendar",
-          icon: Calendar,
+          title: "Messages",
+          url: "/dashboard?section=messaging",
+          icon: MessageSquare,
         },
       ];
     }
@@ -128,7 +120,7 @@ export function AppSidebar() {
         {
           title: "Grades",
           url: "/dashboard?section=grades",
-          icon: Award,
+          icon: GraduationCap,
         },
         {
           title: "Calendar",
@@ -167,37 +159,7 @@ export function AppSidebar() {
     return commonItems;
   };
 
-  // Quick actions for teachers
-  const getQuickActions = () => {
-    if (role === "teacher") {
-      return [
-        {
-          title: "Create Course",
-          icon: Plus,
-          onClick: () => handleNavigation("/dashboard?tab=courses&action=create"),
-        },
-        {
-          title: "New Assignment",
-          icon: FileText,
-          onClick: () => handleNavigation("/dashboard?section=assignments&action=create"),
-        },
-        {
-          title: "Grade Papers",
-          icon: GraduationCap,
-          onClick: () => handleNavigation("/dashboard?section=gradebook"),
-        },
-        {
-          title: "Send Message",
-          icon: MessageSquare,
-          onClick: () => handleNavigation("/dashboard?section=messaging"),
-        },
-      ];
-    }
-    return [];
-  };
-
   const mainNavItems = getMainNavItems();
-  const quickActions = getQuickActions();
 
   // Check if current path matches the nav item
   const isActive = (url: string) => {
@@ -240,24 +202,6 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {quickActions.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {quickActions.map((action) => (
-                  <SidebarMenuItem key={action.title}>
-                    <SidebarMenuButton onClick={action.onClick}>
-                      <action.icon className="h-4 w-4" />
-                      <span>{action.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
 
         <SidebarGroup>
           <SidebarGroupLabel>Support</SidebarGroupLabel>

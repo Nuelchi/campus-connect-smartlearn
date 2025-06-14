@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Users, BookOpen, FileText, Settings } from "lucide-react";
 
 interface QuickAction {
   title: string;
@@ -18,29 +17,27 @@ interface QuickActionsProps {
 
 export default function QuickActions({ actions, title = "Quick Actions" }: QuickActionsProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+    <Card className="h-fit">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-semibold text-gray-900">{title}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {actions.map((action, index) => (
-            <Button
-              key={index}
-              variant={action.variant || "outline"}
-              className="h-auto min-h-[100px] p-4 flex flex-col items-center justify-center gap-3 text-center overflow-hidden"
-              onClick={action.onClick}
-            >
-              <div className="flex-shrink-0">
-                {action.icon}
-              </div>
-              <div className="flex flex-col gap-1 w-full">
-                <span className="font-medium text-sm leading-tight break-words">{action.title}</span>
-                <span className="text-xs text-muted-foreground leading-tight break-words">{action.description}</span>
-              </div>
-            </Button>
-          ))}
-        </div>
+      <CardContent className="space-y-2">
+        {actions.map((action, index) => (
+          <Button
+            key={index}
+            variant={action.variant || "ghost"}
+            className="w-full h-12 justify-start gap-3 px-3 py-2 text-left hover:bg-gray-50 border border-gray-100 rounded-lg"
+            onClick={action.onClick}
+          >
+            <div className="flex-shrink-0 text-gray-600">
+              {action.icon}
+            </div>
+            <div className="flex flex-col items-start min-w-0 flex-1">
+              <span className="font-medium text-sm text-gray-900 truncate w-full">{action.title}</span>
+              <span className="text-xs text-gray-500 truncate w-full">{action.description}</span>
+            </div>
+          </Button>
+        ))}
       </CardContent>
     </Card>
   );

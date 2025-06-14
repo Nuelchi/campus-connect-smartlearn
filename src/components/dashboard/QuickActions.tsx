@@ -28,15 +28,15 @@ export default function QuickActions({ actions, title = "Quick Actions" }: Quick
             <Button
               key={index}
               variant={action.variant || "outline"}
-              className="h-auto p-4 flex flex-col items-center gap-2 text-center"
+              className="h-auto min-h-[100px] p-4 flex flex-col items-center justify-center gap-3 text-center overflow-hidden"
               onClick={action.onClick}
             >
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex-shrink-0">
                 {action.icon}
-                <div className="flex flex-col gap-1">
-                  <span className="font-medium">{action.title}</span>
-                  <span className="text-xs text-muted-foreground">{action.description}</span>
-                </div>
+              </div>
+              <div className="flex flex-col gap-1 w-full">
+                <span className="font-medium text-sm leading-tight break-words">{action.title}</span>
+                <span className="text-xs text-muted-foreground leading-tight break-words">{action.description}</span>
               </div>
             </Button>
           ))}

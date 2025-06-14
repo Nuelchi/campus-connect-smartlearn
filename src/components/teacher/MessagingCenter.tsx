@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -62,22 +61,31 @@ export default function MessagingCenter() {
     try {
       const { data, error } = await supabase
         .from("course_discussions")
-        .select(`
-          *,
-          profiles!course_discussions_author_id_fkey(first_name, last_name)
-        `)
+        .select("*")
         .eq("author_id", user?.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+
+      // Get author profiles separately
+      const authorIds = [...new Set(data?.map(msg => msg.author_id) || [])];
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name")
+        .in("id", authorIds);
+
+      if (profilesError) throw profilesError;
       
-      const formattedMessages: Message[] = (data || []).map(msg => ({
-        ...msg,
-        sender_profile: {
-          first_name: msg.profiles?.first_name || null,
-          last_name: msg.profiles?.last_name || null,
-        }
-      }));
+      const formattedMessages: Message[] = (data || []).map(msg => {
+        const profile = profiles?.find(p => p.id === msg.author_id);
+        return {
+          ...msg,
+          sender_profile: {
+            first_name: profile?.first_name || null,
+            last_name: profile?.last_name || null,
+          }
+        };
+      });
       
       setMessages(formattedMessages);
     } catch (error) {
@@ -105,23 +113,27 @@ export default function MessagingCenter() {
       // Get students enrolled in teacher's courses
       const { data: enrollments, error: enrollmentsError } = await supabase
         .from("enrollments")
-        .select(`
-          student_id,
-          profiles!enrollments_student_id_fkey(id, first_name, last_name)
-        `)
+        .select("student_id")
         .in("course_id", courseIds);
 
       if (enrollmentsError) throw enrollmentsError;
       
-      const uniqueStudents = enrollments?.reduce((acc: Student[], enrollment: any) => {
-        const student = enrollment.profiles;
-        if (student && !acc.find(s => s.id === student.id)) {
-          acc.push(student);
-        }
-        return acc;
-      }, []) || [];
+      const studentIds = [...new Set(enrollments?.map(e => e.student_id) || [])];
       
-      setStudents(uniqueStudents);
+      if (studentIds.length === 0) {
+        setStudents([]);
+        return;
+      }
+
+      // Get student profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name")
+        .in("id", studentIds);
+
+      if (profilesError) throw profilesError;
+      
+      setStudents(profiles || []);
     } catch (error) {
       console.error("Error fetching students:", error);
     }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -85,19 +84,25 @@ export default function Gradebook() {
       // Finally get submissions for those assignments
       const { data: submissionsData, error: submissionsError } = await supabase
         .from("assignment_submissions")
-        .select(`
-          *,
-          profiles!assignment_submissions_student_id_fkey(first_name, last_name)
-        `)
+        .select("*")
         .in("assignment_id", assignmentIds)
         .order("submitted_at", { ascending: false });
 
       if (submissionsError) throw submissionsError;
 
+      // Get student profiles separately
+      const studentIds = [...new Set(submissionsData?.map(s => s.student_id) || [])];
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name")
+        .in("id", studentIds);
+
+      if (profilesError) throw profilesError;
+
       // Combine the data
       const formattedSubmissions: Submission[] = (submissionsData || []).map(sub => {
         const assignment = assignments?.find(a => a.id === sub.assignment_id);
-        const profile = sub.profiles;
+        const profile = profiles?.find(p => p.id === sub.student_id);
         
         return {
           ...sub,

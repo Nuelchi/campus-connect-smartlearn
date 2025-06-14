@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -98,6 +99,19 @@
   }
 
   body {
+    @apply bg-background text-foreground;
+  }
+
+  html {
+    @apply bg-background;
+  }
+
+  /* Ensure dark mode applies to the entire page */
+  .dark {
+    color-scheme: dark;
+  }
+
+  .dark body {
     @apply bg-background text-foreground;
   }
 }

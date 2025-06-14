@@ -1,25 +1,72 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { User } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { User as UserIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Register = () => {
   const [role, setRole] = useState<"student" | "teacher">("student");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // TODO: Connect to Supabase Auth and handle role assignment.
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redirect authenticated users to homepage
+  if (user && !loading) {
+    navigate("/");
+    return null;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Demo: Registration coming soon! (Role: " + role + ")");
+    setSubmitting(true);
+
+    // Sign up via Supabase Auth (with required redirect)
+    const redirectUrl = `${window.location.origin}/`;
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+      },
+    });
+    if (error) {
+      toast({
+        title: "Registration failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setSubmitting(false);
+      return;
+    }
+
+    // Assign user role after account is created
+    if (data?.user?.id) {
+      // Assign 'student' or 'teacher' role in user_roles table
+      await supabase.from("user_roles").insert({
+        user_id: data.user.id,
+        role: role,
+      });
+    }
+
+    toast({
+      title: "Check your inbox",
+      description: "A confirmation email has been sent. Please verify your email to activate your account.",
+    });
+
+    setSubmitting(false);
+    navigate("/login");
   };
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-background">
       <div className="flex items-center mb-3 gap-2">
-        <User className="text-primary" size={28} />
+        <UserIcon className="text-primary" size={28} />
         <span className="font-bold text-lg">Register for SmartLearn</span>
       </div>
       <div className="w-full max-w-sm bg-white p-7 rounded-lg border border-gray-200 shadow animate-fade-in">
@@ -56,6 +103,7 @@ const Register = () => {
             autoFocus
             value={email}
             onChange={e => setEmail(e.target.value)}
+            disabled={submitting}
           />
           <Input
             type="password"
@@ -63,9 +111,10 @@ const Register = () => {
             placeholder="Password"
             value={password}
             onChange={e => setPassword(e.target.value)}
+            disabled={submitting}
           />
-          <Button type="submit" className="bg-emerald-600 text-white hover:bg-emerald-700 mt-2">
-            Register
+          <Button type="submit" className="bg-emerald-600 text-white hover:bg-emerald-700 mt-2" disabled={submitting}>
+            {submitting ? "Registering..." : "Register"}
           </Button>
         </form>
         <div className="flex justify-between items-center mt-5 text-xs">

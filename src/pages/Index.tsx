@@ -1,14 +1,25 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
-const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
-};
+// Main Landing Page for SmartLearn LMS
+
+import Navbar from "../components/Navbar";
+import HeroSection from "../components/HeroSection";
+import Highlights from "../components/Highlights";
+import HowItWorks from "../components/HowItWorks";
+import CallToAction from "../components/CallToAction";
+
+const Index = () => (
+  <div>
+    <Navbar />
+    <main>
+      <HeroSection />
+      <Highlights />
+      <HowItWorks />
+      <CallToAction />
+    </main>
+    <footer className="py-8 text-center text-muted-foreground text-sm bg-background mt-10 border-t">
+      &copy; {new Date().getFullYear()} SmartLearn. Empowering Knowledge for All.
+    </footer>
+  </div>
+);
 
 export default Index;

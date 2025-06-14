@@ -1,184 +1,91 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Book, Users, Settings, LayoutDashboard, Bell, BarChart3 } from "lucide-react";
+import { Book, Users, Settings, LayoutDashboard, FileText, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import DashboardStats from "@/components/DashboardStats";
 import CourseManagement from "@/components/CourseManagement";
+import AssignmentManagement from "@/components/dashboard/AssignmentManagement";
+import StudentManagement from "@/components/dashboard/StudentManagement";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import SettingsPanel from "@/components/dashboard/SettingsPanel";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-
-interface AdminStats {
-  totalActiveCourses: number;
-  totalStudents: number;
-  totalTeachers: number;
-  totalAssignments: number;
-  totalEnrollments: number;
-  totalSubmissions: number;
-  totalUsers: number;
-}
-
-interface RecentActivity {
-  id: string;
-  type: string;
-  description: string;
-  user_email: string;
-  created_at: string;
-}
 
 export default function AdminDashboard() {
-  const { signOut, user, role } = useAuth();
-  const { toast } = useToast();
+  const { signOut, user } = useAuth();
   const [activeSection, setActiveSection] = useState("dashboard");
-  const [stats, setStats] = useState<AdminStats>({
-    totalActiveCourses: 0,
-    totalStudents: 0,
+  const [stats, setStats] = useState({
+    totalUsers: 0,
     totalTeachers: 0,
+    totalStudents: 0,
+    totalCourses: 0,
     totalAssignments: 0,
     totalEnrollments: 0,
     totalSubmissions: 0,
-    totalUsers: 0,
   });
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Check if user is admin
-  useEffect(() => {
-    if (user && role !== 'admin') {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to access the admin dashboard.",
-        variant: "destructive",
-      });
-    }
-  }, [user, role, toast]);
-
-  const fetchAdminStats = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("admin_dashboard_stats")
-        .select("*")
-        .single();
-
-      if (error) {
-        console.error("Error fetching admin stats:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch dashboard statistics.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (data) {
-        setStats({
-          totalActiveCourses: data.total_active_courses || 0,
-          totalStudents: data.total_students || 0,
-          totalTeachers: data.total_teachers || 0,
-          totalAssignments: data.total_assignments || 0,
-          totalEnrollments: data.total_enrollments || 0,
-          totalSubmissions: data.total_submissions || 0,
-          totalUsers: data.total_users || 0,
-        });
-      }
-    } catch (error) {
-      console.error("Error in fetchAdminStats:", error);
-    }
-  };
-
-  const fetchRecentActivity = async () => {
-    try {
-      const { data, error } = await supabase.rpc("get_recent_activity", {
-        limit_count: 10,
-      });
-
-      if (error) {
-        console.error("Error fetching recent activity:", error);
-        return;
-      }
-
-      if (data) {
-        setRecentActivity(data);
-      }
-    } catch (error) {
-      console.error("Error in fetchRecentActivity:", error);
-    }
-  };
 
   useEffect(() => {
-    const loadDashboardData = async () => {
-      if (!user || role !== 'admin') return;
-      
-      setLoading(true);
-      await Promise.all([fetchAdminStats(), fetchRecentActivity()]);
-      setLoading(false);
+    const fetchStats = async () => {
+      if (!user) return;
+
+      // Fetch total users
+      const { count: usersCount } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true });
+
+      // Fetch total teachers
+      const { count: teachersCount } = await supabase
+        .from("user_roles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "teacher");
+
+      // Fetch total students
+      const { count: studentsCount } = await supabase
+        .from("user_roles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "student");
+
+      // Fetch total courses
+      const { count: coursesCount } = await supabase
+        .from("courses")
+        .select("*", { count: "exact", head: true });
+
+      // Fetch total assignments
+      const { count: assignmentsCount } = await supabase
+        .from("assignments")
+        .select("*", { count: "exact", head: true });
+
+      // Fetch total enrollments
+      const { count: enrollmentsCount } = await supabase
+        .from("enrollments")
+        .select("*", { count: "exact", head: true });
+
+      // Fetch total submissions (mock for now)
+      const totalSubmissions = 150; // Mock data
+
+      setStats({
+        totalUsers: usersCount || 0,
+        totalTeachers: teachersCount || 0,
+        totalStudents: studentsCount || 0,
+        totalCourses: coursesCount || 0,
+        totalAssignments: assignmentsCount || 0,
+        totalEnrollments: enrollmentsCount || 0,
+        totalSubmissions: totalSubmissions,
+      });
     };
 
-    loadDashboardData();
-
-    // Set up periodic refresh every 30 seconds
-    const interval = setInterval(loadDashboardData, 30000);
-
-    return () => clearInterval(interval);
-  }, [user, role]);
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'course_created':
-        return 'bg-green-500';
-      case 'student_enrolled':
-        return 'bg-blue-500';
-      case 'assignment_created':
-        return 'bg-purple-500';
-      case 'submission_created':
-        return 'bg-yellow-500';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Less than an hour ago';
-    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-    
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
-  };
+    fetchStats();
+  }, [user]);
 
   const renderContent = () => {
     switch (activeSection) {
       case "courses":
         return <CourseManagement />;
-      case "users":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">User management functionality coming soon...</p>
-            </CardContent>
-          </Card>
-        );
-      case "analytics":
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Analytics Dashboard</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Advanced analytics coming soon...</p>
-            </CardContent>
-          </Card>
-        );
+      case "students":
+        return <StudentManagement />;
+      case "assignments":
+        return <AssignmentManagement userRole="admin" />;
       case "notifications":
         return <NotificationCenter />;
       case "settings":
@@ -189,139 +96,85 @@ export default function AdminDashboard() {
             <div>
               <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
               <p className="text-muted-foreground">
-                Manage your learning management system and monitor platform activity.
+                Manage users, monitor activity, and oversee the entire learning platform.
               </p>
             </div>
-            
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="text-muted-foreground">Loading dashboard data...</div>
-              </div>
-            ) : (
-              <>
-                <DashboardStats 
-                  role="admin" 
-                  stats={{
-                    totalCourses: stats.totalActiveCourses,
-                    totalStudents: stats.totalStudents,
-                    totalAssignments: stats.totalAssignments,
-                    totalTeachers: stats.totalTeachers,
-                    totalEnrollments: stats.totalEnrollments,
-                    totalSubmissions: stats.totalSubmissions,
-                    totalUsers: stats.totalUsers,
-                  }} 
-                />
-                
-                <Tabs defaultValue="overview" className="space-y-6">
-                  <TabsList>
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="courses">Courses</TabsTrigger>
-                    <TabsTrigger value="users">Users</TabsTrigger>
-                    <TabsTrigger value="analytics">Analytics</TabsTrigger>
-                  </TabsList>
+            <DashboardStats role="admin" stats={{
+              totalCourses: stats.totalCourses,
+              totalStudents: stats.totalStudents,
+              totalAssignments: stats.totalAssignments,
+              completionRate: 85 // Mock data for now
+            }} />
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="courses">Courses</TabsTrigger>
+                <TabsTrigger value="students">Students</TabsTrigger>
+                <TabsTrigger value="assignments">Assignments</TabsTrigger>
+              </TabsList>
 
-                  <TabsContent value="overview" className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Recent Activity</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            {recentActivity.length > 0 ? (
-                              recentActivity.map((activity) => (
-                                <div key={activity.id} className="flex items-center gap-3">
-                                  <div className={`w-2 h-2 rounded-full ${getActivityIcon(activity.type)}`}></div>
-                                  <div className="flex-1">
-                                    <span className="text-sm">{activity.description}</span>
-                                    <div className="text-xs text-muted-foreground">
-                                      by {activity.user_email} • {formatTimeAgo(activity.created_at)}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="text-sm text-muted-foreground">No recent activity</div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
+              <TabsContent value="overview" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>System Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm">Total Users: {stats.totalUsers}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-sm">Total Courses: {stats.totalCourses}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          <span className="text-sm">Total Assignments: {stats.totalAssignments}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>System Health</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm">Server Status</span>
-                              <span className="text-green-600 text-sm font-medium">Healthy</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm">Database</span>
-                              <span className="text-green-600 text-sm font-medium">Connected</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm">Storage</span>
-                              <span className="text-green-600 text-sm font-medium">Available</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm">Last Updated</span>
-                              <span className="text-blue-600 text-sm font-medium">Just now</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </TabsContent>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Recent Activity</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">New user registered</span>
+                        <span className="text-muted-foreground text-sm">5 minutes ago</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Course "Mathematics 101" created</span>
+                        <span className="text-muted-foreground text-sm">30 minutes ago</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Assignment "Physics Lab Report" submitted</span>
+                        <span className="text-muted-foreground text-sm">1 hour ago</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
 
-                  <TabsContent value="courses">
-                    <CourseManagement />
-                  </TabsContent>
+              <TabsContent value="courses">
+                <CourseManagement />
+              </TabsContent>
 
-                  <TabsContent value="users">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>User Management</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground">User management functionality coming soon...</p>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
+              <TabsContent value="students">
+                <StudentManagement />
+              </TabsContent>
 
-                  <TabsContent value="analytics">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Analytics Dashboard</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground">Advanced analytics coming soon...</p>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                </Tabs>
-              </>
-            )}
+              <TabsContent value="assignments">
+                <AssignmentManagement userRole="admin" />
+              </TabsContent>
+            </Tabs>
           </div>
         );
     }
   };
-
-  // Don't render anything if user is not admin
-  if (role !== 'admin') {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="p-8 rounded-xl bg-background border shadow text-center">
-          <div className="text-2xl font-bold mb-2">Access Denied</div>
-          <div className="text-muted-foreground mb-4">
-            You don't have permission to access the admin dashboard.
-          </div>
-          <Button onClick={signOut}>Sign Out</Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-screen bg-muted/40">
@@ -350,20 +203,20 @@ export default function AdminDashboard() {
             Courses
           </Button>
           <Button 
-            variant={activeSection === "users" ? "default" : "ghost"} 
+            variant={activeSection === "students" ? "default" : "ghost"} 
             className="w-full justify-start"
-            onClick={() => setActiveSection("users")}
+            onClick={() => setActiveSection("students")}
           >
             <Users className="mr-2 h-4 w-4" />
-            Users
+            Students
           </Button>
           <Button 
-            variant={activeSection === "analytics" ? "default" : "ghost"} 
+            variant={activeSection === "assignments" ? "default" : "ghost"} 
             className="w-full justify-start"
-            onClick={() => setActiveSection("analytics")}
+            onClick={() => setActiveSection("assignments")}
           >
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Analytics
+            <FileText className="mr-2 h-4 w-4" />
+            Assignments
           </Button>
           <Button 
             variant={activeSection === "notifications" ? "default" : "ghost"} 
@@ -391,6 +244,29 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-auto">
         <div className="space-y-8">
+          {/* Header */}
+          {activeSection === "dashboard" && (
+            <>
+              <div>
+                <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+                <p className="text-muted-foreground">
+                  Manage users, monitor activity, and oversee the entire learning platform.
+                </p>
+              </div>
+              {/* Stats */}
+              <DashboardStats 
+                role="admin" 
+                stats={{
+                  totalCourses: stats.totalCourses,
+                  totalStudents: stats.totalStudents,
+                  totalAssignments: stats.totalAssignments,
+                  completionRate: 85 // Mock data for now
+                }} 
+              />
+            </>
+          )}
+
+          {/* Content */}
           {renderContent()}
         </div>
       </main>

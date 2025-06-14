@@ -26,41 +26,65 @@ const Register = () => {
     e.preventDefault();
     setSubmitting(true);
 
-    // Sign up via Supabase Auth (with required redirect)
-    const redirectUrl = `${window.location.origin}/`;
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-      },
-    });
-    if (error) {
+    try {
+      // Sign up via Supabase Auth (with required redirect)
+      const redirectUrl = `${window.location.origin}/`;
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+        },
+      });
+
+      if (error) {
+        toast({
+          title: "Registration failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      // If user was created successfully, assign role
+      if (data?.user?.id) {
+        console.log("Assigning role to user:", data.user.id, "Role:", role);
+        
+        // Assign 'student' or 'teacher' role in user_roles table
+        const { error: roleError } = await supabase.from("user_roles").insert({
+          user_id: data.user.id,
+          role: role,
+        });
+
+        if (roleError) {
+          console.error("Error assigning role:", roleError);
+          toast({
+            title: "Role assignment failed",
+            description: "Account created but role assignment failed. Please contact support.",
+            variant: "destructive",
+          });
+        } else {
+          console.log("Role assigned successfully");
+        }
+      }
+
+      toast({
+        title: "Registration successful!",
+        description: "Your account has been created. You can now log in.",
+      });
+
+      setSubmitting(false);
+      navigate("/login");
+    } catch (error) {
+      console.error("Registration error:", error);
       toast({
         title: "Registration failed",
-        description: error.message,
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
       setSubmitting(false);
-      return;
     }
-
-    // Assign user role after account is created
-    if (data?.user?.id) {
-      // Assign 'student' or 'teacher' role in user_roles table
-      await supabase.from("user_roles").insert({
-        user_id: data.user.id,
-        role: role,
-      });
-    }
-
-    toast({
-      title: "Check your inbox",
-      description: "A confirmation email has been sent. Please verify your email to activate your account.",
-    });
-
-    setSubmitting(false);
-    navigate("/login");
   };
 
   return (

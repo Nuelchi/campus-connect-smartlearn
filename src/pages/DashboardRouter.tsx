@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import AdminDashboard from "./AdminDashboard";
 import TeacherDashboard from "./TeacherDashboard";
 import StudentDashboard from "./StudentDashboard";
+import RoleSelector from "@/components/RoleSelector";
 
 // This handles redirect for users without a dashboard role, or not logged in
 export default function DashboardRouter() {
@@ -30,14 +31,20 @@ export default function DashboardRouter() {
   if (role === "teacher") return <TeacherDashboard />;
   if (role === "student" || role === "user") return <StudentDashboard />;
 
-  // Fallback: unknown role
+  // If user is logged in but has no role, show role selector
+  if (user && !role) {
+    return <RoleSelector />;
+  }
+
+  // Fallback: should not reach here normally
   return (
     <div className="flex justify-center items-center min-h-screen">
       <div className="p-8 rounded-xl bg-background border shadow text-center">
-        <div className="text-2xl font-bold mb-2">No Dashboard Assigned</div>
+        <div className="text-2xl font-bold mb-2">Authentication Required</div>
         <div className="text-muted-foreground mb-4">
-          Your account does not have an assigned dashboard yet.<br />Contact your admin if you think this is a mistake.
+          Please log in to access your dashboard.
         </div>
+        <Button onClick={() => navigate("/login")}>Go to Login</Button>
       </div>
     </div>
   );

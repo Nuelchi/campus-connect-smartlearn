@@ -5,6 +5,8 @@ import DashboardWelcome from "@/components/dashboard/DashboardWelcome";
 import DashboardStats from "@/components/DashboardStats";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
+import TeacherCourseManagement from "@/components/teacher/TeacherCourseManagement";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function TeacherDashboard() {
   // Mock data - replace with real data from your API
@@ -80,10 +82,23 @@ export default function TeacherDashboard() {
       <div className="space-y-8">
         <DashboardStats role="teacher" stats={stats} />
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <QuickActions actions={quickActions} />
-          <RecentActivity activities={recentActivities} />
-        </div>
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="overview">Dashboard Overview</TabsTrigger>
+            <TabsTrigger value="courses">Course Management</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <QuickActions actions={quickActions} />
+              <RecentActivity activities={recentActivities} />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="courses">
+            <TeacherCourseManagement />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

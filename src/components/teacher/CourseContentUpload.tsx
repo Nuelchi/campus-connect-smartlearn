@@ -61,7 +61,7 @@ export default function CourseContentUpload({ courseId, onContentUploaded }: Cou
       }
 
       const { error } = await supabase
-        .from("course_content")
+        .from("course_materials")
         .insert({
           course_id: courseId,
           title: formData.title,

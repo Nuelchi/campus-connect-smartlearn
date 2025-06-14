@@ -7,30 +7,29 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { MessageSquare, Send, Users } from "lucide-react";
+import { MessageSquare, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/use-toast";
 
 interface Message {
   id: string;
-  subject: string;
+  title: string;
   content: string;
   created_at: string;
-  sender_id: string;
-  recipient_id: string;
+  author_id: string;
   course_id: string;
-  is_read: boolean;
+  is_announcement: boolean;
   sender_profile?: {
-    first_name: string;
-    last_name: string;
+    first_name: string | null;
+    last_name: string | null;
   };
 }
 
 interface Student {
   id: string;
-  first_name: string;
-  last_name: string;
+  first_name: string | null;
+  last_name: string | null;
 }
 
 interface Course {
@@ -46,9 +45,8 @@ export default function MessagingCenter() {
   const [loading, setLoading] = useState(true);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [messageForm, setMessageForm] = useState({
-    recipient_id: "",
     course_id: "",
-    subject: "",
+    title: "",
     content: "",
   });
 
@@ -63,16 +61,25 @@ export default function MessagingCenter() {
   const fetchMessages = async () => {
     try {
       const { data, error } = await supabase
-        .from("messages")
+        .from("course_discussions")
         .select(`
           *,
-          sender_profile:profiles!messages_sender_id_fkey(first_name, last_name)
+          profiles!course_discussions_author_id_fkey(first_name, last_name)
         `)
-        .or(`sender_id.eq.${user?.id},recipient_id.eq.${user?.id}`)
+        .eq("author_id", user?.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setMessages(data || []);
+      
+      const formattedMessages: Message[] = (data || []).map(msg => ({
+        ...msg,
+        sender_profile: {
+          first_name: msg.profiles?.first_name || null,
+          last_name: msg.profiles?.last_name || null,
+        }
+      }));
+      
+      setMessages(formattedMessages);
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
@@ -80,24 +87,33 @@ export default function MessagingCenter() {
 
   const fetchStudents = async () => {
     try {
+      // Get teacher's courses first
+      const { data: teacherCourses, error: coursesError } = await supabase
+        .from("courses")
+        .select("id")
+        .eq("instructor_id", user?.id);
+
+      if (coursesError) throw coursesError;
+      
+      const courseIds = teacherCourses?.map(c => c.id) || [];
+      
+      if (courseIds.length === 0) {
+        setStudents([]);
+        return;
+      }
+
       // Get students enrolled in teacher's courses
-      const { data, error } = await supabase
+      const { data: enrollments, error: enrollmentsError } = await supabase
         .from("enrollments")
         .select(`
           student_id,
           profiles!enrollments_student_id_fkey(id, first_name, last_name)
         `)
-        .in("course_id", 
-          await supabase
-            .from("courses")
-            .select("id")
-            .eq("instructor_id", user?.id)
-            .then(res => res.data?.map(c => c.id) || [])
-        );
+        .in("course_id", courseIds);
 
-      if (error) throw error;
+      if (enrollmentsError) throw enrollmentsError;
       
-      const uniqueStudents = data?.reduce((acc: Student[], enrollment: any) => {
+      const uniqueStudents = enrollments?.reduce((acc: Student[], enrollment: any) => {
         const student = enrollment.profiles;
         if (student && !acc.find(s => s.id === student.id)) {
           acc.push(student);
@@ -133,26 +149,25 @@ export default function MessagingCenter() {
 
     try {
       const { error } = await supabase
-        .from("messages")
+        .from("course_discussions")
         .insert({
-          sender_id: user.id,
-          recipient_id: messageForm.recipient_id,
+          author_id: user.id,
           course_id: messageForm.course_id,
-          subject: messageForm.subject,
+          title: messageForm.title,
           content: messageForm.content,
+          is_announcement: true,
         });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Message sent successfully!",
+        description: "Announcement posted successfully!",
       });
 
       setMessageForm({
-        recipient_id: "",
         course_id: "",
-        subject: "",
+        title: "",
         content: "",
       });
       setIsComposeOpen(false);
@@ -161,7 +176,7 @@ export default function MessagingCenter() {
       console.error("Error sending message:", error);
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: "Failed to post announcement. Please try again.",
         variant: "destructive",
       });
     }
@@ -174,17 +189,17 @@ export default function MessagingCenter() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Messages</h2>
+        <h2 className="text-2xl font-bold">Course Announcements</h2>
         <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
           <DialogTrigger asChild>
             <Button>
               <MessageSquare className="mr-2 h-4 w-4" />
-              Compose Message
+              Create Announcement
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Send Message</DialogTitle>
+              <DialogTitle>Create Course Announcement</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSendMessage} className="space-y-4">
               <div className="space-y-2">
@@ -204,39 +219,23 @@ export default function MessagingCenter() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="recipient">Student</Label>
-                <Select value={messageForm.recipient_id} onValueChange={(value) => setMessageForm(prev => ({ ...prev, recipient_id: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select student" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {students.map((student) => (
-                      <SelectItem key={student.id} value={student.id}>
-                        {student.first_name} {student.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="subject">Subject</Label>
+                <Label htmlFor="title">Title</Label>
                 <Input
-                  id="subject"
-                  value={messageForm.subject}
-                  onChange={(e) => setMessageForm(prev => ({ ...prev, subject: e.target.value }))}
-                  placeholder="Enter subject"
+                  id="title"
+                  value={messageForm.title}
+                  onChange={(e) => setMessageForm(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Enter announcement title"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="content">Message</Label>
+                <Label htmlFor="content">Content</Label>
                 <Textarea
                   id="content"
                   value={messageForm.content}
                   onChange={(e) => setMessageForm(prev => ({ ...prev, content: e.target.value }))}
-                  placeholder="Write your message"
+                  placeholder="Write your announcement"
                   rows={4}
                   required
                 />
@@ -248,7 +247,7 @@ export default function MessagingCenter() {
                 </Button>
                 <Button type="submit">
                   <Send className="mr-2 h-4 w-4" />
-                  Send Message
+                  Post Announcement
                 </Button>
               </div>
             </form>
@@ -262,20 +261,20 @@ export default function MessagingCenter() {
             <CardContent className="pt-6">
               <div className="text-center py-8">
                 <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold">No messages yet</h3>
-                <p className="text-muted-foreground">Start a conversation with your students</p>
+                <h3 className="mt-4 text-lg font-semibold">No announcements yet</h3>
+                <p className="text-muted-foreground">Create your first course announcement</p>
               </div>
             </CardContent>
           </Card>
         ) : (
           messages.map((message) => (
-            <Card key={message.id} className={!message.is_read && message.recipient_id === user?.id ? "border-blue-500" : ""}>
+            <Card key={message.id}>
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-lg">{message.subject}</CardTitle>
+                    <CardTitle className="text-lg">{message.title}</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      From: {message.sender_profile?.first_name} {message.sender_profile?.last_name}
+                      By: {message.sender_profile?.first_name} {message.sender_profile?.last_name}
                     </p>
                   </div>
                   <span className="text-sm text-muted-foreground">

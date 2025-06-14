@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, FileText, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,8 +16,8 @@ interface Submission {
   id: string;
   assignment_id: string;
   student_id: string;
-  file_name: string;
-  file_url: string;
+  file_name: string | null;
+  file_url: string | null;
   submitted_at: string;
   grade: number | null;
   feedback: string | null;
@@ -27,8 +27,8 @@ interface Submission {
     course_id: string;
   };
   student_profile: {
-    first_name: string;
-    last_name: string;
+    first_name: string | null;
+    last_name: string | null;
   };
 }
 
@@ -50,33 +50,76 @@ export default function Gradebook() {
 
   const fetchSubmissions = async () => {
     try {
-      // Get all submissions for assignments in teacher's courses
-      const { data, error } = await supabase
+      // First get teacher's courses
+      const { data: courses, error: coursesError } = await supabase
+        .from("courses")
+        .select("id")
+        .eq("instructor_id", user?.id);
+
+      if (coursesError) throw coursesError;
+      
+      const courseIds = courses?.map(c => c.id) || [];
+      
+      if (courseIds.length === 0) {
+        setSubmissions([]);
+        setLoading(false);
+        return;
+      }
+
+      // Then get assignments for those courses
+      const { data: assignments, error: assignmentsError } = await supabase
+        .from("assignments")
+        .select("id, title, course_id")
+        .in("course_id", courseIds);
+
+      if (assignmentsError) throw assignmentsError;
+      
+      const assignmentIds = assignments?.map(a => a.id) || [];
+      
+      if (assignmentIds.length === 0) {
+        setSubmissions([]);
+        setLoading(false);
+        return;
+      }
+
+      // Finally get submissions for those assignments
+      const { data: submissionsData, error: submissionsError } = await supabase
         .from("assignment_submissions")
         .select(`
           *,
-          assignment:assignments(title, course_id),
-          student_profile:profiles!assignment_submissions_student_id_fkey(first_name, last_name)
+          profiles!assignment_submissions_student_id_fkey(first_name, last_name)
         `)
-        .in("assignment_id",
-          await supabase
-            .from("assignments")
-            .select("id")
-            .in("course_id",
-              await supabase
-                .from("courses")
-                .select("id")
-                .eq("instructor_id", user?.id)
-                .then(res => res.data?.map(c => c.id) || [])
-            )
-            .then(res => res.data?.map(a => a.id) || [])
-        )
+        .in("assignment_id", assignmentIds)
         .order("submitted_at", { ascending: false });
 
-      if (error) throw error;
-      setSubmissions(data || []);
+      if (submissionsError) throw submissionsError;
+
+      // Combine the data
+      const formattedSubmissions: Submission[] = (submissionsData || []).map(sub => {
+        const assignment = assignments?.find(a => a.id === sub.assignment_id);
+        const profile = sub.profiles;
+        
+        return {
+          ...sub,
+          assignment: {
+            title: assignment?.title || "Unknown Assignment",
+            course_id: assignment?.course_id || "",
+          },
+          student_profile: {
+            first_name: profile?.first_name || null,
+            last_name: profile?.last_name || null,
+          }
+        };
+      });
+
+      setSubmissions(formattedSubmissions);
     } catch (error) {
       console.error("Error fetching submissions:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load submissions. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -183,7 +226,7 @@ export default function Gradebook() {
                 <div className="flex justify-between items-center">
                   <div className="flex items-center space-x-2">
                     <FileText className="h-4 w-4" />
-                    <span className="text-sm">{submission.file_name}</span>
+                    <span className="text-sm">{submission.file_name || "No file"}</span>
                     {submission.file_url && (
                       <Button variant="outline" size="sm" asChild>
                         <a href={submission.file_url} target="_blank" rel="noopener noreferrer">

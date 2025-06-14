@@ -15,9 +15,9 @@ import Gradebook from "./Gradebook";
 interface Course {
   id: string;
   title: string;
-  description: string;
-  category: string;
-  department: string;
+  description: string | null;
+  category: string | null;
+  department: string | null;
   created_at: string;
   enrollment_count?: number;
 }
@@ -25,16 +25,16 @@ interface Course {
 interface CourseContent {
   id: string;
   title: string;
-  content_type: string;
-  file_url: string;
+  content_type: string | null;
+  file_url: string | null;
   created_at: string;
 }
 
 interface Assignment {
   id: string;
   title: string;
-  description: string;
-  deadline: string;
+  description: string | null;
+  deadline: string | null;
   created_at: string;
 }
 
@@ -78,7 +78,11 @@ export default function TeacherCourseManagement() {
             .eq("course_id", course.id)
             .eq("status", "active");
           
-          return { ...course, enrollment_count: count || 0 };
+          return { 
+            ...course, 
+            enrollment_count: count || 0,
+            department: course.category || "General" // Use category as department fallback
+          };
         })
       );
 
@@ -98,7 +102,7 @@ export default function TeacherCourseManagement() {
 
     try {
       const { data, error } = await supabase
-        .from("course_content")
+        .from("course_materials")
         .select("*")
         .eq("course_id", selectedCourse.id)
         .order("created_at", { ascending: false });
@@ -169,7 +173,7 @@ export default function TeacherCourseManagement() {
                   >
                     <h4 className="font-medium text-sm">{course.title}</h4>
                     <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs opacity-70">{course.category}</span>
+                      <span className="text-xs opacity-70">{course.category || "General"}</span>
                       <Badge variant="secondary" className="text-xs">
                         {course.enrollment_count} students
                       </Badge>
@@ -190,8 +194,8 @@ export default function TeacherCourseManagement() {
                       <CardTitle>{selectedCourse.title}</CardTitle>
                       <p className="text-muted-foreground mt-1">{selectedCourse.description}</p>
                       <div className="flex items-center space-x-4 mt-2">
-                        <Badge variant="outline">{selectedCourse.category}</Badge>
-                        <Badge variant="outline">{selectedCourse.department}</Badge>
+                        <Badge variant="outline">{selectedCourse.category || "General"}</Badge>
+                        <Badge variant="outline">{selectedCourse.department || "General"}</Badge>
                         <Badge variant="outline">
                           <Users className="mr-1 h-3 w-3" />
                           {selectedCourse.enrollment_count} students
@@ -206,7 +210,7 @@ export default function TeacherCourseManagement() {
                       <TabsTrigger value="content">Content</TabsTrigger>
                       <TabsTrigger value="assignments">Assignments</TabsTrigger>
                       <TabsTrigger value="students">Students</TabsTrigger>
-                      <TabsTrigger value="messages">Messages</TabsTrigger>
+                      <TabsTrigger value="messages">Announcements</TabsTrigger>
                       <TabsTrigger value="grades">Grades</TabsTrigger>
                     </TabsList>
 
@@ -235,11 +239,11 @@ export default function TeacherCourseManagement() {
                                 <div>
                                   <h4 className="font-medium">{content.title}</h4>
                                   <p className="text-sm text-muted-foreground">
-                                    {content.content_type.toUpperCase()} • {new Date(content.created_at).toLocaleDateString()}
+                                    {content.content_type?.toUpperCase() || "FILE"} • {new Date(content.created_at).toLocaleDateString()}
                                   </p>
                                 </div>
                               </div>
-                              <Badge variant="outline">{content.content_type}</Badge>
+                              <Badge variant="outline">{content.content_type || "file"}</Badge>
                             </div>
                           ))
                         )}
@@ -271,7 +275,7 @@ export default function TeacherCourseManagement() {
                                   </p>
                                 </div>
                                 <Badge variant="outline">
-                                  {new Date(assignment.deadline) > new Date() ? "Active" : "Past Due"}
+                                  {assignment.deadline && new Date(assignment.deadline) > new Date() ? "Active" : "Past Due"}
                                 </Badge>
                               </div>
                             </div>

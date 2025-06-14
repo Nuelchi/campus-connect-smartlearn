@@ -11,13 +11,11 @@ import AssignmentManagement from "@/components/dashboard/AssignmentManagement";
 import StudentManagement from "@/components/dashboard/StudentManagement";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import SettingsPanel from "@/components/dashboard/SettingsPanel";
-import DashboardNavbar from "@/components/DashboardNavbar";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function TeacherDashboard() {
   const { signOut, user } = useAuth();
   const [activeSection, setActiveSection] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stats, setStats] = useState({
     totalCourses: 0,
     totalStudents: 0,
@@ -163,95 +161,76 @@ export default function TeacherDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/40">
-      <DashboardNavbar 
-        title="Teacher Dashboard" 
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-      />
-      
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className={`bg-background border-r w-64 h-[calc(100vh-4rem)] transition-transform duration-300 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 md:block fixed md:relative z-40`}>
-          <div className="p-6 flex flex-col h-full">
-            <div className="flex items-center gap-2 mb-8">
-              <Book className="text-primary" />
-              <span className="font-bold text-xl">Teacher Panel</span>
-            </div>
-            
-            <nav className="space-y-2 flex-1">
-              <Button 
-                variant={activeSection === "dashboard" ? "default" : "ghost"} 
-                className="w-full justify-start"
-                onClick={() => setActiveSection("dashboard")}
-              >
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                Dashboard
-              </Button>
-              <Button 
-                variant={activeSection === "courses" ? "default" : "ghost"} 
-                className="w-full justify-start"
-                onClick={() => setActiveSection("courses")}
-              >
-                <Book className="mr-2 h-4 w-4" />
-                My Courses
-              </Button>
-              <Button 
-                variant={activeSection === "students" ? "default" : "ghost"} 
-                className="w-full justify-start"
-                onClick={() => setActiveSection("students")}
-              >
-                <Users className="mr-2 h-4 w-4" />
-                Students
-              </Button>
-              <Button 
-                variant={activeSection === "assignments" ? "default" : "ghost"} 
-                className="w-full justify-start"
-                onClick={() => setActiveSection("assignments")}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Assignments
-              </Button>
-              <Button 
-                variant={activeSection === "notifications" ? "default" : "ghost"} 
-                className="w-full justify-start"
-                onClick={() => setActiveSection("notifications")}
-              >
-                <Bell className="mr-2 h-4 w-4" />
-                Notifications
-              </Button>
-              <Button 
-                variant={activeSection === "settings" ? "default" : "ghost"} 
-                className="w-full justify-start"
-                onClick={() => setActiveSection("settings")}
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </Button>
-            </nav>
-            
-            <Button onClick={signOut} variant="outline" className="w-full mt-4">
-              Sign Out
-            </Button>
-          </div>
-        </aside>
+    <div className="flex h-screen bg-muted/40">
+      {/* Sidebar */}
+      <aside className="bg-background border-r w-64 p-6 flex flex-col">
+        <div className="flex items-center gap-2 mb-8">
+          <Book className="text-primary" />
+          <span className="font-bold text-xl">Teacher Panel</span>
+        </div>
+        
+        <nav className="space-y-2 flex-1">
+          <Button 
+            variant={activeSection === "dashboard" ? "default" : "ghost"} 
+            className="w-full justify-start"
+            onClick={() => setActiveSection("dashboard")}
+          >
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Dashboard
+          </Button>
+          <Button 
+            variant={activeSection === "courses" ? "default" : "ghost"} 
+            className="w-full justify-start"
+            onClick={() => setActiveSection("courses")}
+          >
+            <Book className="mr-2 h-4 w-4" />
+            My Courses
+          </Button>
+          <Button 
+            variant={activeSection === "students" ? "default" : "ghost"} 
+            className="w-full justify-start"
+            onClick={() => setActiveSection("students")}
+          >
+            <Users className="mr-2 h-4 w-4" />
+            Students
+          </Button>
+          <Button 
+            variant={activeSection === "assignments" ? "default" : "ghost"} 
+            className="w-full justify-start"
+            onClick={() => setActiveSection("assignments")}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Assignments
+          </Button>
+          <Button 
+            variant={activeSection === "notifications" ? "default" : "ghost"} 
+            className="w-full justify-start"
+            onClick={() => setActiveSection("notifications")}
+          >
+            <Bell className="mr-2 h-4 w-4" />
+            Notifications
+          </Button>
+          <Button 
+            variant={activeSection === "settings" ? "default" : "ghost"} 
+            className="w-full justify-start"
+            onClick={() => setActiveSection("settings")}
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </Button>
+        </nav>
+        
+        <Button onClick={signOut} variant="outline" className="w-full mt-4">
+          Sign Out
+        </Button>
+      </aside>
 
-        {/* Overlay for mobile */}
-        {sidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 z-30 md:hidden" 
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* Main Content */}
-        <main className="flex-1 p-8 overflow-auto md:ml-0">
-          <div className="space-y-8">
-            {renderContent()}
-          </div>
-        </main>
-      </div>
+      {/* Main Content */}
+      <main className="flex-1 p-8 overflow-auto">
+        <div className="space-y-8">
+          {renderContent()}
+        </div>
+      </main>
     </div>
   );
 }

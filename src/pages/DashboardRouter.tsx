@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,24 +12,14 @@ import RoleSelector from "@/components/RoleSelector";
 export default function DashboardRouter() {
   const { user, loading, role } = useAuth();
   const navigate = useNavigate();
-  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
     }
-    
-    // Add a small delay to prevent role selector flash when role is being fetched
-    if (!loading) {
-      const timer = setTimeout(() => {
-        setIsInitializing(false);
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    }
   }, [user, loading, navigate]);
 
-  if (loading || isInitializing) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-lg font-semibold animate-pulse">Loading Dashboard...</div>

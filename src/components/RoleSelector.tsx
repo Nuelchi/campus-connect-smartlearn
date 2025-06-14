@@ -16,6 +16,37 @@ export default function RoleSelector() {
     setAssigning(true);
     console.log("Assigning role:", selectedRole, "to user:", user.id);
 
+    // First check if user already has a role
+    const { data: existingRole, error: checkError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("Error checking existing role:", checkError);
+      toast({
+        title: "Error",
+        description: "Failed to check existing role. Please try again.",
+        variant: "destructive",
+      });
+      setAssigning(false);
+      return;
+    }
+
+    if (existingRole) {
+      console.log("User already has role:", existingRole.role);
+      toast({
+        title: "Role Already Assigned",
+        description: `You already have the ${existingRole.role} role assigned!`,
+      });
+      // Force a refresh of the auth state
+      window.location.reload();
+      setAssigning(false);
+      return;
+    }
+
+    // If no existing role, insert new one
     const { error } = await supabase.from("user_roles").insert({
       user_id: user.id,
       role: selectedRole,
@@ -77,7 +108,7 @@ export default function RoleSelector() {
           disabled={assigning}
           className="w-full"
         >
-          {assigning ? "Assigning Role..." : `Continue as ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}`}
+          {assigning ? "Checking Role..." : `Continue as ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}`}
         </Button>
       </div>
     </div>

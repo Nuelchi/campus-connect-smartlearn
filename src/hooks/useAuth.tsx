@@ -23,18 +23,28 @@ export function useAuth() {
 
   // Fetch user roles from Supabase (assume only one role per user)
   const fetchRole = useCallback(async (uid: string) => {
+    console.log("Fetching role for user:", uid);
     const { data, error } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", uid)
       .maybeSingle();
-    if (!error && data) setRole(data.role);
-    else setRole(null);
+    
+    console.log("Role fetch result:", { data, error });
+    
+    if (!error && data) {
+      console.log("Setting role to:", data.role);
+      setRole(data.role);
+    } else {
+      console.log("No role found or error occurred");
+      setRole(null);
+    }
   }, []);
 
   useEffect(() => {
     // Listen for auth state changes
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state change:", event, session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -50,6 +60,7 @@ export function useAuth() {
 
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session:", session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -75,4 +86,3 @@ export function useAuth() {
 
   return { user, session, profile, role, loading, signOut };
 }
-

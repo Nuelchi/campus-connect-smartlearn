@@ -31,10 +31,12 @@ export default function QuickActions({ actions, title = "Quick Actions" }: Quick
               className="h-auto p-4 flex flex-col items-center gap-2 text-center"
               onClick={action.onClick}
             >
-              {action.icon}
-              <div>
-                <div className="font-medium">{action.title}</div>
-                <div className="text-xs text-muted-foreground">{action.description}</div>
+              <div className="flex flex-col items-center gap-2">
+                {action.icon}
+                <div className="flex flex-col gap-1">
+                  <span className="font-medium">{action.title}</span>
+                  <span className="text-xs text-muted-foreground">{action.description}</span>
+                </div>
               </div>
             </Button>
           ))}

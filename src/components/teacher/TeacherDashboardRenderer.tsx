@@ -1,4 +1,3 @@
-
 import TeacherSectionRenderer from "./TeacherSectionRenderer";
 import TeacherDashboardContent from "./TeacherDashboardContent";
 
@@ -8,10 +7,13 @@ interface TeacherDashboardRendererProps {
 }
 
 export default function TeacherDashboardRenderer({ section, tab }: TeacherDashboardRendererProps) {
-  // Render content based on section parameter
-  if (section) {
+  console.log("TeacherDashboardRenderer - section:", section, "tab:", tab);
+  
+  // If we have a section parameter, render the section-specific content
+  if (section && section !== "dashboard") {
     return <TeacherSectionRenderer section={section} />;
   }
   
+  // Otherwise, render the main dashboard content with tabs
   return <TeacherDashboardContent tab={tab} />;
 }

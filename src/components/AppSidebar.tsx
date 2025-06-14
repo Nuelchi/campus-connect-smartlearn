@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -58,8 +59,9 @@ export function AppSidebar() {
     return user?.email || "User";
   };
 
-  // Navigation handler
+  // Navigation handler with proper URL construction
   const handleNavigation = (path: string) => {
+    console.log("Navigating to:", path);
     navigate(path);
   };
 
@@ -77,7 +79,7 @@ export function AppSidebar() {
       return [
         ...commonItems,
         {
-          title: "My Courses",
+          title: "Course Management",
           url: "/dashboard?tab=courses",
           icon: BookOpen,
         },
@@ -161,12 +163,22 @@ export function AppSidebar() {
 
   const mainNavItems = getMainNavItems();
 
-  // Check if current path matches the nav item
+  // Improved path matching logic
   const isActive = (url: string) => {
+    const currentPath = location.pathname + location.search;
+    console.log("Checking if active:", url, "vs current:", currentPath);
+    
+    // Handle exact dashboard match (no query params)
     if (url === "/dashboard") {
-      return location.pathname === "/dashboard" && !location.search;
+      return currentPath === "/dashboard" || currentPath === "/dashboard?";
     }
-    return location.pathname + location.search === url;
+    
+    // Handle URLs with query parameters
+    if (url.includes("?")) {
+      return currentPath === url;
+    }
+    
+    return false;
   };
 
   return (

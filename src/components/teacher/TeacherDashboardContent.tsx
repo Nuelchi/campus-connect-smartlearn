@@ -5,12 +5,18 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import TeacherCourseManagement from "./TeacherCourseManagement";
 import TeacherQuickActions from "./TeacherQuickActions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 interface TeacherDashboardContentProps {
   tab: string | null;
 }
 
 export default function TeacherDashboardContent({ tab }: TeacherDashboardContentProps) {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  console.log("TeacherDashboardContent - tab:", tab);
+  
   // Mock data - replace with real data from your API
   const stats = {
     totalCourses: 8,
@@ -46,6 +52,17 @@ export default function TeacherDashboardContent({ tab }: TeacherDashboardContent
     },
   ];
 
+  const handleTabChange = (value: string) => {
+    console.log("Tab changed to:", value);
+    if (value === "overview") {
+      navigate("/dashboard");
+    } else {
+      navigate(`/dashboard?tab=${value}`);
+    }
+  };
+
+  const currentTab = tab || "overview";
+
   return (
     <>
       <DashboardWelcome roleSpecificMessage="Ready to inspire and educate today?" />
@@ -53,7 +70,7 @@ export default function TeacherDashboardContent({ tab }: TeacherDashboardContent
       <div className="space-y-8">
         <DashboardStats role="teacher" stats={stats} />
         
-        <Tabs defaultValue={tab || "overview"} className="w-full">
+        <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="overview">Dashboard Overview</TabsTrigger>
             <TabsTrigger value="courses">Course Management</TabsTrigger>

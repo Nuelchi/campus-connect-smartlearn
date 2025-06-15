@@ -20,20 +20,30 @@ export function useWebSocketMessages(): MessageHookReturn {
   const fetchConversations = useCallback(async () => {
     if (!user) return;
 
-    const conversationsData = await ConversationService.fetchConversations(user.id);
-    setConversations(conversationsData);
-    
-    // Fetch unread counts for each conversation
-    const counts = await ConversationService.fetchUnreadCounts(conversationsData, user.id);
-    setUnreadCounts(counts);
+    try {
+      const conversationsData = await ConversationService.fetchConversations(user.id);
+      setConversations(conversationsData);
+      
+      // Fetch unread counts for each conversation
+      const counts = await ConversationService.fetchUnreadCounts(conversationsData, user.id);
+      setUnreadCounts(counts);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+    }
   }, [user]);
 
   // Fetch messages for a specific conversation
   const fetchMessages = useCallback(async (conversationId: string) => {
     if (!user) return;
 
-    const messagesData = await MessageService.fetchMessages(conversationId, conversations);
-    setMessages(messagesData);
+    try {
+      console.log("Fetching messages for conversation:", conversationId);
+      const messagesData = await MessageService.fetchMessages(conversationId, conversations);
+      console.log("Fetched messages:", messagesData);
+      setMessages(messagesData);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
   }, [user, conversations]);
 
   // Send a new message
@@ -43,15 +53,16 @@ export function useWebSocketMessages(): MessageHookReturn {
     try {
       await MessageService.sendMessage(user.id, recipientId, content);
 
-      // Refresh conversations
+      // Refresh conversations to update last_message_at
       await fetchConversations();
       
-      // If this is the active conversation, refresh messages
+      // If this is the active conversation, refresh messages immediately
       if (activeConversationId) {
         await fetchMessages(activeConversationId);
       }
     } catch (error) {
       console.error("Error sending message:", error);
+      throw error;
     }
   }, [user, activeConversationId, fetchConversations, fetchMessages]);
 
@@ -71,6 +82,7 @@ export function useWebSocketMessages(): MessageHookReturn {
       return conversationId;
     } catch (error) {
       console.error("Error starting conversation:", error);
+      throw error;
     }
   }, [user, fetchConversations]);
 
@@ -90,6 +102,7 @@ export function useWebSocketMessages(): MessageHookReturn {
       return conversationId;
     } catch (error) {
       console.error("Error starting course conversation:", error);
+      throw error;
     }
   }, [user, handleCourseConversation, fetchConversations]);
 
@@ -97,22 +110,33 @@ export function useWebSocketMessages(): MessageHookReturn {
   const markAsRead = useCallback(async (conversationId: string) => {
     if (!user) return;
 
-    await ConversationService.markMessagesAsRead(conversationId, user.id, conversations);
+    try {
+      await ConversationService.markMessagesAsRead(conversationId, user.id, conversations);
 
-    // Update unread counts
-    setUnreadCounts(prev => ({
-      ...prev,
-      [conversationId]: 0
-    }));
+      // Update unread counts
+      setUnreadCounts(prev => ({
+        ...prev,
+        [conversationId]: 0
+      }));
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
   }, [user, conversations]);
 
   // Set up realtime subscriptions
   useMessageSubscriptions({
     userId: user?.id || null,
     activeConversationId,
-    onNewMessage: fetchConversations,
-    onConversationUpdate: fetchConversations,
+    onNewMessage: () => {
+      console.log("New message received, refreshing conversations");
+      fetchConversations();
+    },
+    onConversationUpdate: () => {
+      console.log("Conversation updated, refreshing conversations");
+      fetchConversations();
+    },
     onMessageUpdate: () => {
+      console.log("Message updated, refreshing messages for active conversation");
       if (activeConversationId) {
         fetchMessages(activeConversationId);
       }
@@ -122,6 +146,7 @@ export function useWebSocketMessages(): MessageHookReturn {
   // Initial load
   useEffect(() => {
     if (user) {
+      console.log("User available, fetching conversations");
       fetchConversations();
       setLoading(false);
     }
@@ -130,8 +155,12 @@ export function useWebSocketMessages(): MessageHookReturn {
   // Fetch messages when active conversation changes
   useEffect(() => {
     if (activeConversationId) {
+      console.log("Active conversation changed to:", activeConversationId);
       fetchMessages(activeConversationId);
       markAsRead(activeConversationId);
+    } else {
+      // Clear messages when no conversation is selected
+      setMessages([]);
     }
   }, [activeConversationId, fetchMessages, markAsRead]);
 

@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Send, Users, Mail } from "lucide-react";
 import { useWebSocketMessages } from "@/hooks/useWebSocketMessages";
 import { useAuth } from "@/hooks/useAuth";
+import { useSearchParams } from "react-router-dom";
 import ConversationList from "./ConversationList";
 import ChatWindow from "./ChatWindow";
 import UserSearchDialog from "./UserSearchDialog";
@@ -14,6 +15,7 @@ import UnreadIndicator from "./UnreadIndicator";
 
 export default function MessagingCenterV2() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const {
     conversations,
     messages,
@@ -22,12 +24,32 @@ export default function MessagingCenterV2() {
     unreadCounts,
     loading,
     sendMessage,
-    startConversation
+    startConversation,
+    refetchConversations
   } = useWebSocketMessages();
   
   const [searchOpen, setSearchOpen] = useState(false);
   const [emailSearchOpen, setEmailSearchOpen] = useState(false);
   const [messageContent, setMessageContent] = useState("");
+
+  // Check for conversation ID in URL params (when coming from course card)
+  useEffect(() => {
+    const conversationId = searchParams.get('conversation');
+    if (conversationId && conversations.length > 0) {
+      // Find the conversation and set it as active
+      const targetConversation = conversations.find(c => c.id === conversationId);
+      if (targetConversation) {
+        setActiveConversationId(conversationId);
+      }
+    }
+  }, [searchParams, conversations, setActiveConversationId]);
+
+  // Auto-select the most recent conversation if none is selected
+  useEffect(() => {
+    if (!activeConversationId && conversations.length > 0) {
+      setActiveConversationId(conversations[0].id);
+    }
+  }, [conversations, activeConversationId, setActiveConversationId]);
 
   const handleSendMessage = async () => {
     if (!messageContent.trim() || !activeConversationId) return;
@@ -40,8 +62,12 @@ export default function MessagingCenterV2() {
       ? activeConversation.participant2_id 
       : activeConversation.participant1_id;
 
-    await sendMessage(recipientId, messageContent);
-    setMessageContent("");
+    try {
+      await sendMessage(recipientId, messageContent);
+      setMessageContent("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

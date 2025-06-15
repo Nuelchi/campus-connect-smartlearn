@@ -41,14 +41,17 @@ export default function CourseCard({
 
   const handleMessageTeacher = async () => {
     try {
-      await startCourseConversation(course.id);
-      toast({
-        title: "Chat started",
-        description: "You can now message the course instructor",
-      });
-      // Navigate to messaging section
-      window.location.href = "/dashboard?section=messaging";
+      const conversationId = await startCourseConversation(course.id);
+      if (conversationId) {
+        toast({
+          title: "Chat started",
+          description: "You can now message the course instructor",
+        });
+        // Navigate to messaging section with conversation ID
+        window.location.href = `/dashboard?section=messaging&conversation=${conversationId}`;
+      }
     } catch (error) {
+      console.error("Error starting conversation:", error);
       toast({
         title: "Error",
         description: "Failed to start conversation with instructor",

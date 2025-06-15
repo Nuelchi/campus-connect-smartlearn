@@ -7,6 +7,7 @@ import TeacherAnalyticsDashboard from "./TeacherAnalyticsDashboard";
 import SettingsPanel from "@/components/dashboard/SettingsPanel";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import CreateCourseDialog from "./CreateCourseDialog";
+import StudentManagement from "@/components/dashboard/StudentManagement";
 import { useCourses } from "@/hooks/useCourses";
 
 interface TeacherSectionRendererProps {
@@ -35,16 +36,7 @@ export default function TeacherSectionRenderer({ section }: TeacherSectionRender
         </Card>
       );
     case "students":
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle>Student Management</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Student management functionality coming soon...</p>
-          </CardContent>
-        </Card>
-      );
+      return <StudentManagement />;
     case "assignments":
       return (
         <Card>

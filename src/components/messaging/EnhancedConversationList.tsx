@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -16,6 +15,7 @@ interface ConversationWithDetails extends Conversation {
     id: string;
     first_name: string | null;
     last_name: string | null;
+    username: string | null;
   };
   course?: {
     id: string;
@@ -68,7 +68,7 @@ export default function EnhancedConversationList({
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("id, first_name, last_name")
+          .select("id, first_name, last_name, username")
           .eq("id", otherParticipantId)
           .single();
 
@@ -130,9 +130,34 @@ export default function EnhancedConversationList({
     }
   };
 
-  const getDisplayName = (participant?: { first_name: string | null; last_name: string | null }) => {
+  const getEmailInitials = (email: string, count: number = 4): string => {
+    return email.split('@')[0].substring(0, count).toUpperCase();
+  };
+
+  const getDisplayName = async (participant?: { id: string; first_name: string | null; last_name: string | null; username: string | null }) => {
     if (!participant) return "Unknown User";
-    return `${participant.first_name || ""} ${participant.last_name || ""}`.trim() || "Unknown User";
+
+    // First priority: username
+    if (participant.username) {
+      return participant.username;
+    }
+
+    // Second priority: first + last name
+    if (participant.first_name || participant.last_name) {
+      return `${participant.first_name || ""} ${participant.last_name || ""}`.trim();
+    }
+
+    // Third priority: email initials
+    try {
+      const { data: authUser } = await supabase.auth.getUser();
+      if (authUser?.user?.email) {
+        return getEmailInitials(authUser.user.email);
+      }
+    } catch (error) {
+      console.error("Error fetching user email:", error);
+    }
+
+    return "Unknown User";
   };
 
   if (loading) {
@@ -175,6 +200,11 @@ export default function EnhancedConversationList({
                 const unreadCount = unreadCounts[conversation.id] || 0;
                 const isActive = activeConversationId === conversation.id;
                 
+                const displayName = conversation.otherParticipant?.username || 
+                  (conversation.otherParticipant?.first_name || conversation.otherParticipant?.last_name 
+                    ? `${conversation.otherParticipant.first_name || ""} ${conversation.otherParticipant.last_name || ""}`.trim()
+                    : "User");
+                
                 return (
                   <div
                     key={conversation.id}
@@ -188,18 +218,17 @@ export default function EnhancedConversationList({
                     <div className="flex items-start gap-3">
                       <Avatar className="h-10 w-10">
                         <AvatarFallback className="text-sm">
-                          {getDisplayName(conversation.otherParticipant)
-                            .split(" ")
-                            .map(n => n[0])
-                            .join("")
-                            .toUpperCase()}
+                          {conversation.otherParticipant?.username 
+                            ? conversation.otherParticipant.username.substring(0, 2).toUpperCase()
+                            : displayName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2)
+                          }
                         </AvatarFallback>
                       </Avatar>
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <h5 className="font-medium text-sm truncate">
-                            {getDisplayName(conversation.otherParticipant)}
+                            {displayName}
                           </h5>
                           {unreadCount > 0 && (
                             <UnreadIndicator count={unreadCount} />

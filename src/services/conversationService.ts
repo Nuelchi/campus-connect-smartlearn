@@ -10,61 +10,68 @@ export class ConversationService {
       .or(`participant1_id.eq.${userId},participant2_id.eq.${userId}`)
       .order("last_message_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching conversations:", error);
-      return [];
-    }
-    
+    if (error) throw error;
     return data || [];
+  }
+
+  static async getOrCreateConversation(userId: string, otherUserId: string): Promise<string> {
+    // First check if conversation already exists
+    const { data: existingConversation, error: fetchError } = await supabase
+      .from("conversations")
+      .select("id")
+      .or(`and(participant1_id.eq.${userId},participant2_id.eq.${otherUserId}),and(participant1_id.eq.${otherUserId},participant2_id.eq.${userId})`)
+      .maybeSingle();
+
+    if (fetchError) throw fetchError;
+
+    if (existingConversation) {
+      return existingConversation.id;
+    }
+
+    // Create new conversation without sending initial message
+    const { data: newConversation, error: createError } = await supabase
+      .from("conversations")
+      .insert({
+        participant1_id: userId < otherUserId ? userId : otherUserId,
+        participant2_id: userId < otherUserId ? otherUserId : userId,
+      })
+      .select("id")
+      .single();
+
+    if (createError) throw createError;
+
+    return newConversation.id;
   }
 
   static async fetchUnreadCounts(conversations: Conversation[], userId: string): Promise<Record<string, number>> {
     const counts: Record<string, number> = {};
-    
-    for (const conv of conversations) {
-      const otherParticipant = conv.participant1_id === userId 
-        ? conv.participant2_id 
-        : conv.participant1_id;
 
+    for (const conversation of conversations) {
       const { count, error } = await supabase
         .from("messages")
         .select("*", { count: "exact", head: true })
-        .eq("sender_id", otherParticipant)
         .eq("recipient_id", userId)
-        .eq("is_read", false);
+        .eq("is_read", false)
+        .or(`and(sender_id.eq.${conversation.participant1_id},recipient_id.eq.${conversation.participant2_id}),and(sender_id.eq.${conversation.participant2_id},recipient_id.eq.${conversation.participant1_id})`);
 
-      if (!error && count !== null) {
-        counts[conv.id] = count;
+      if (!error) {
+        counts[conversation.id] = count || 0;
       }
     }
-    
+
     return counts;
-  }
-
-  static async getOrCreateConversation(user1Id: string, user2Id: string): Promise<string> {
-    const { data: conversationId, error } = await supabase
-      .rpc("get_or_create_conversation", {
-        user1_id: user1Id,
-        user2_id: user2Id
-      });
-
-    if (error) throw error;
-    return conversationId;
   }
 
   static async markMessagesAsRead(conversationId: string, userId: string, conversations: Conversation[]): Promise<void> {
     const conversation = conversations.find(c => c.id === conversationId);
     if (!conversation) return;
 
-    const otherParticipant = conversation.participant1_id === userId 
-      ? conversation.participant2_id 
-      : conversation.participant1_id;
-
-    await supabase
+    const { error } = await supabase
       .from("messages")
       .update({ is_read: true })
-      .eq("sender_id", otherParticipant)
       .eq("recipient_id", userId)
-      .eq("is_read", false);
+      .or(`and(sender_id.eq.${conversation.participant1_id},recipient_id.eq.${conversation.participant2_id}),and(sender_id.eq.${conversation.participant2_id},recipient_id.eq.${conversation.participant1_id})`);
+
+    if (error) throw error;
   }
 }

@@ -62,19 +62,43 @@ export default function ConversationList({
     return profiles[otherUserId];
   };
 
+  const getEmailInitials = (email: string, count: number = 4): string => {
+    return email.split('@')[0].substring(0, count).toUpperCase();
+  };
+
   const getDisplayName = (profile: Profile | null) => {
     if (!profile) return "Unknown User";
+
+    // First priority: username
+    if (profile.username) {
+      return profile.username;
+    }
+
+    // Second priority: first + last name
     if (profile.first_name || profile.last_name) {
       return `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
     }
+
+    // Third priority: would need email from auth, but we'll just show "User" for now
     return "User";
   };
 
   const getInitials = (profile: Profile | null) => {
     if (!profile) return "U";
+
+    // First try username initials
+    if (profile.username) {
+      return profile.username.substring(0, 2).toUpperCase();
+    }
+
+    // Then try first + last name initials
     const firstName = profile.first_name || "";
     const lastName = profile.last_name || "";
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || "U";
+    if (firstName || lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || "U";
+    }
+
+    return "U";
   };
 
   if (conversations.length === 0) {

@@ -60,19 +60,54 @@ export default function ChatWindow({ messages, conversationId, conversations }: 
 
   const otherProfile = otherParticipant ? profiles[otherParticipant] : null;
 
-  const getDisplayName = (profile: Profile | null) => {
-    if (!profile) return "Unknown User";
+  const getEmailInitials = (email: string, count: number = 4): string => {
+    return email.split('@')[0].substring(0, count).toUpperCase();
+  };
+
+  const getDisplayName = (profile: Profile | null, userId?: string) => {
+    if (!profile) {
+      // If we don't have profile data, try to get email from user
+      if (userId === user?.id && user?.email) {
+        return getEmailInitials(user.email);
+      }
+      return "Unknown User";
+    }
+
+    // First priority: username
+    if (profile.username) {
+      return profile.username;
+    }
+
+    // Second priority: first + last name
     if (profile.first_name || profile.last_name) {
       return `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
     }
+
+    // Third priority: email initials (we need to get the email from auth.users)
     return "User";
   };
 
-  const getInitials = (profile: Profile | null) => {
-    if (!profile) return "U";
+  const getInitials = (profile: Profile | null, userId?: string) => {
+    if (!profile) {
+      if (userId === user?.id && user?.email) {
+        return getEmailInitials(user.email, 2);
+      }
+      return "U";
+    }
+
+    // First try username initials
+    if (profile.username) {
+      return profile.username.substring(0, 2).toUpperCase();
+    }
+
+    // Then try first + last name initials
     const firstName = profile.first_name || "";
     const lastName = profile.last_name || "";
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || "U";
+    if (firstName || lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || "U";
+    }
+
+    return "U";
   };
 
   const formatTime = (dateString: string) => {
@@ -89,11 +124,11 @@ export default function ChatWindow({ messages, conversationId, conversations }: 
         <div className="flex items-center gap-3 p-4 border-b">
           <Avatar className="h-10 w-10">
             <AvatarFallback className="bg-primary/10 text-primary font-medium">
-              {getInitials(otherProfile)}
+              {getInitials(otherProfile, otherParticipant)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h3 className="font-semibold">{getDisplayName(otherProfile)}</h3>
+            <h3 className="font-semibold">{getDisplayName(otherProfile, otherParticipant)}</h3>
             <p className="text-sm text-muted-foreground">
               {otherProfile.department || "Student/Teacher"}
             </p>
@@ -123,7 +158,7 @@ export default function ChatWindow({ messages, conversationId, conversations }: 
                 {!isOwnMessage && (
                   <Avatar className="h-8 w-8 mt-1">
                     <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                      {getInitials(senderProfile)}
+                      {getInitials(senderProfile, message.sender_id)}
                     </AvatarFallback>
                   </Avatar>
                 )}

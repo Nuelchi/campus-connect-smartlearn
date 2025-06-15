@@ -68,6 +68,14 @@ export default function AssignmentManagement({ userRole }: AssignmentManagementP
     setLoading(false);
   };
 
+  const handleButtonClick = () => {
+    if (userRole === "teacher") {
+      window.location.href = "/dashboard?section=assignments";
+    } else {
+      window.location.href = "/dashboard?section=submit-assignment";
+    }
+  };
+
   if (loading) {
     return <div className="p-4">Loading assignments...</div>;
   }
@@ -117,7 +125,7 @@ export default function AssignmentManagement({ userRole }: AssignmentManagementP
                   </div>
                 </div>
                 <div className="mt-4">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={handleButtonClick}>
                     {userRole === "teacher" ? "View Submissions" : "Submit Assignment"}
                   </Button>
                 </div>

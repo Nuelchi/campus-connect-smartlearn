@@ -8,7 +8,7 @@ interface CalendarEvent {
   id: string;
   title: string;
   description: string | null;
-  event_type: 'academic' | 'holiday' | 'celebration' | 'exam' | 'deadline' | 'break';
+  event_type: string; // Changed from strict union to string to match database
   start_date: string;
   end_date: string | null;
   is_all_day: boolean | null;
@@ -27,6 +27,7 @@ export function useCalendarEvents() {
 
   const fetchEvents = useCallback(async () => {
     try {
+      console.log('Fetching calendar events...');
       const { data, error } = await supabase
         .from('calendar_events')
         .select('*')
@@ -37,6 +38,7 @@ export function useCalendarEvents() {
         console.error('Error fetching calendar events:', error);
         toast.error('Failed to load calendar events');
       } else {
+        console.log('Fetched calendar events:', data);
         setEvents(data || []);
       }
     } catch (error) {
@@ -73,14 +75,20 @@ export function useCalendarEvents() {
   }, [user?.id]);
 
   const getEventsByDateRange = useCallback((startDate: Date, endDate: Date) => {
-    return events.filter(event => {
+    console.log('Getting events for date range:', startDate, 'to', endDate);
+    const filteredEvents = events.filter(event => {
       const eventStart = new Date(event.start_date);
       const eventEnd = event.end_date ? new Date(event.end_date) : eventStart;
       
-      return (eventStart >= startDate && eventStart <= endDate) ||
+      const isInRange = (eventStart >= startDate && eventStart <= endDate) ||
              (eventEnd >= startDate && eventEnd <= endDate) ||
              (eventStart <= startDate && eventEnd >= endDate);
+      
+      console.log(`Event "${event.title}" (${eventStart.toDateString()}) in range:`, isInRange);
+      return isInRange;
     });
+    console.log('Filtered events for date range:', filteredEvents);
+    return filteredEvents;
   }, [events]);
 
   const getUpcomingEvents = useCallback((limit: number = 5) => {

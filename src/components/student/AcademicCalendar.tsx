@@ -9,7 +9,7 @@ import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { CalendarIcon, Clock, MapPin, Bell, Sparkles } from "lucide-react";
 import { format, isSameDay, isToday, isTomorrow, addDays, startOfMonth, endOfMonth } from "date-fns";
 
-const eventTypeColors = {
+const eventTypeColors: Record<string, string> = {
   academic: 'bg-blue-500',
   holiday: 'bg-red-500',
   celebration: 'bg-purple-500',
@@ -18,7 +18,7 @@ const eventTypeColors = {
   break: 'bg-green-500'
 };
 
-const eventTypeEmojis = {
+const eventTypeEmojis: Record<string, string> = {
   academic: '🎓',
   holiday: '🎉',
   celebration: '🎊',
@@ -32,6 +32,9 @@ export default function AcademicCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [view, setView] = useState<'month' | 'list'>('month');
 
+  console.log('Current events in component:', events);
+  console.log('Selected date:', selectedDate);
+
   const selectedDateEvents = events.filter(event => 
     isSameDay(new Date(event.start_date), selectedDate)
   );
@@ -43,9 +46,18 @@ export default function AcademicCalendar() {
     endOfMonth(selectedDate)
   );
 
+  console.log('Current month events:', currentMonthEvents);
+
   const getEventPriority = (eventType: string) => {
-    const priorities = { exam: 1, deadline: 2, academic: 3, holiday: 4, celebration: 5, break: 6 };
-    return priorities[eventType as keyof typeof priorities] || 7;
+    const priorities: Record<string, number> = { 
+      exam: 1, 
+      deadline: 2, 
+      academic: 3, 
+      holiday: 4, 
+      celebration: 5, 
+      break: 6 
+    };
+    return priorities[eventType] || 7;
   };
 
   const formatEventTime = (event: any) => {
@@ -161,9 +173,9 @@ export default function AcademicCalendar() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-lg">
-                                {eventTypeEmojis[event.event_type]}
+                                {eventTypeEmojis[event.event_type] || '📅'}
                               </span>
-                              <Badge className={eventTypeColors[event.event_type]}>
+                              <Badge className={eventTypeColors[event.event_type] || 'bg-gray-500'}>
                                 {event.event_type}
                               </Badge>
                             </div>
@@ -223,9 +235,9 @@ export default function AcademicCalendar() {
                     <div key={event.id} className="flex items-center gap-4 p-4 border rounded-lg">
                       <div className="text-center">
                         <div className="text-2xl">
-                          {eventTypeEmojis[event.event_type]}
+                          {eventTypeEmojis[event.event_type] || '📅'}
                         </div>
-                        <Badge className={`${eventTypeColors[event.event_type]} text-xs`}>
+                        <Badge className={`${eventTypeColors[event.event_type] || 'bg-gray-500'} text-xs`}>
                           {event.event_type}
                         </Badge>
                       </div>

@@ -3,14 +3,17 @@ import { Plus, BookOpen, Calendar, Award } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import DashboardWelcome from "@/components/dashboard/DashboardWelcome";
 import DashboardStats from "@/components/DashboardStats";
-import QuickActions from "@/components/dashboard/QuickActions";
-import RecentActivity from "@/components/dashboard/RecentActivity";
+import StudentQuickActions from "@/components/student/StudentQuickActions";
+import StudentRecentActivity from "@/components/student/StudentRecentActivity";
 import StudentSectionRenderer from "@/components/student/StudentSectionRenderer";
 import { useSearchParams } from "react-router-dom";
+import { useStudentAnalytics } from "@/hooks/useStudentAnalytics";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function StudentDashboard() {
   const [searchParams] = useSearchParams();
   const section = searchParams.get("section");
+  const { analytics, loading } = useStudentAnalytics();
 
   // If there's a section parameter, render that section
   if (section) {
@@ -24,47 +27,46 @@ export default function StudentDashboard() {
     );
   }
 
-  // Mock data - replace with real data from your API
-  const stats = {
-    enrolledCourses: 5,
-    pendingAssignments: 3,
-    completionRate: 85,
-  };
-
-  const quickActions = [
-    {
-      title: "Browse Courses",
-      description: "Find new courses to enroll in",
-      icon: <BookOpen className="h-6 w-6" />,
-      onClick: () => window.location.href = "/dashboard?section=courses",
-    },
-    {
-      title: "View Assignments",
-      description: "Check your pending assignments",
-      icon: <Calendar className="h-6 w-6" />,
-      onClick: () => window.location.href = "/dashboard?section=assignments",
-    },
-    {
-      title: "My Certificates",
-      description: "View your earned certificates",
-      icon: <Award className="h-6 w-6" />,
-      onClick: () => window.location.href = "/dashboard?section=certificates",
-    },
-  ];
-
   return (
     <DashboardLayout 
       title="Student Dashboard" 
-      subtitle="Manage your learning journey"
+      subtitle="Your path to academic excellence"
     >
-      <DashboardWelcome roleSpecificMessage="Ready to continue your learning journey?" />
+      <DashboardWelcome roleSpecificMessage="Ready to unlock your potential today? 🚀" />
       
       <div className="space-y-8">
-        <DashboardStats role="student" stats={stats} />
+        {/* Motivational Banner */}
+        <Card className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white border-0">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Keep Going! You're Doing Great! ✨</h2>
+                <p className="text-blue-100">
+                  {analytics.completionRate > 75 ? "Outstanding progress! You're on fire! 🔥" :
+                   analytics.completionRate > 50 ? "Great momentum! Keep pushing forward! 💪" :
+                   "Every expert was once a beginner. Start your journey today! 🌟"}
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold">{analytics.completionRate}%</div>
+                <div className="text-sm text-blue-100">Completion Rate</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <DashboardStats 
+          role="student" 
+          stats={{
+            enrolledCourses: analytics.enrolledCourses,
+            pendingAssignments: analytics.pendingAssignments,
+            completionRate: analytics.completionRate,
+          }} 
+        />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <QuickActions actions={quickActions} />
-          <RecentActivity />
+          <StudentQuickActions />
+          <StudentRecentActivity />
         </div>
       </div>
     </DashboardLayout>

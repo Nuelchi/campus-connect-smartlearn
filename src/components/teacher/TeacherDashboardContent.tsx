@@ -7,6 +7,7 @@ import TeacherQuickActions from "./TeacherQuickActions";
 import TeacherAnalyticsDashboard from "./TeacherAnalyticsDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTeacherAnalytics } from "@/hooks/useTeacherAnalytics";
 
 interface TeacherDashboardContentProps {
   tab: string | null;
@@ -15,16 +16,9 @@ interface TeacherDashboardContentProps {
 export default function TeacherDashboardContent({ tab }: TeacherDashboardContentProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { analytics, loading } = useTeacherAnalytics();
   
   console.log("TeacherDashboardContent - tab:", tab);
-  
-  // Mock data - replace with real data from your API
-  const stats = {
-    totalCourses: 8,
-    totalStudents: 156,
-    totalAssignments: 24,
-    completionRate: 78,
-  };
 
   const handleTabChange = (value: string) => {
     console.log("Tab changed to:", value);
@@ -39,10 +33,18 @@ export default function TeacherDashboardContent({ tab }: TeacherDashboardContent
 
   return (
     <>
-      <DashboardWelcome roleSpecificMessage="Ready to inspire and educate today?" />
+      <DashboardWelcome roleSpecificMessage="Ready to inspire and educate today? 📚" />
       
       <div className="space-y-8">
-        <DashboardStats role="teacher" stats={stats} />
+        <DashboardStats 
+          role="teacher" 
+          stats={{
+            totalCourses: analytics.totalCourses,
+            totalStudents: analytics.totalStudents,
+            totalAssignments: analytics.totalAssignments,
+            totalSubmissions: analytics.totalSubmissions,
+          }} 
+        />
         
         <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-3">

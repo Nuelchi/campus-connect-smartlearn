@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -29,6 +28,8 @@ export default function CreateAssignmentDialog({ courseId, onAssignmentCreated }
     instructions: "",
     maxSubmissions: 1,
     maxFileSize: 10485760, // 10MB default
+    lecturerFirstName: "",
+    lecturerLastName: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,13 +39,6 @@ export default function CreateAssignmentDialog({ courseId, onAssignmentCreated }
     setLoading(true);
 
     try {
-      // Get the user's profile to include their name
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("first_name, last_name")
-        .eq("id", user.id)
-        .single();
-
       const { error } = await supabase
         .from("assignments")
         .insert({
@@ -55,8 +49,8 @@ export default function CreateAssignmentDialog({ courseId, onAssignmentCreated }
           deadline: deadline?.toISOString(),
           max_submissions: formData.maxSubmissions,
           max_file_size: formData.maxFileSize,
-          lecturer_first_name: profile?.first_name || null,
-          lecturer_last_name: profile?.last_name || null,
+          lecturer_first_name: formData.lecturerFirstName,
+          lecturer_last_name: formData.lecturerLastName,
         });
 
       if (error) throw error;
@@ -72,6 +66,8 @@ export default function CreateAssignmentDialog({ courseId, onAssignmentCreated }
         instructions: "",
         maxSubmissions: 1,
         maxFileSize: 10485760,
+        lecturerFirstName: "",
+        lecturerLastName: "",
       });
       setDeadline(undefined);
       setIsOpen(false);
@@ -101,6 +97,29 @@ export default function CreateAssignmentDialog({ courseId, onAssignmentCreated }
           <DialogTitle>Create New Assignment</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="lecturerFirstName">Your First Name</Label>
+              <Input
+                id="lecturerFirstName"
+                value={formData.lecturerFirstName}
+                onChange={(e) => setFormData(prev => ({ ...prev, lecturerFirstName: e.target.value }))}
+                placeholder="Enter your first name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lecturerLastName">Your Last Name</Label>
+              <Input
+                id="lecturerLastName"
+                value={formData.lecturerLastName}
+                onChange={(e) => setFormData(prev => ({ ...prev, lecturerLastName: e.target.value }))}
+                placeholder="Enter your last name"
+                required
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="title">Assignment Title</Label>
             <Input

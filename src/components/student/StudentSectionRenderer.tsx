@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CourseManagement from "@/components/CourseManagement";
 import SettingsPanel from "@/components/dashboard/SettingsPanel";
@@ -90,17 +91,6 @@ export default function StudentSectionRenderer({ section }: StudentSectionRender
       return <StudentGrades />;
     case "certificates":
       return <CertificateCenter />;
-    case "progress":
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle>Learning Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Progress tracking functionality coming soon...</p>
-          </CardContent>
-        </Card>
-      );
     case "calendar":
       return <AcademicCalendar />;
     case "notifications":

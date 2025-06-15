@@ -14,7 +14,6 @@ import {
   GraduationCap,
   Upload,
   Award,
-  BookmarkCheck,
   PlusCircle,
   Search,
   Library,
@@ -118,11 +117,6 @@ export const getMainNavItems = (role: string | null): NavigationItem[] => {
         title: "Certificates",
         url: "/dashboard?section=certificates",
         icon: Award,
-      },
-      {
-        title: "Progress Tracking",
-        url: "/dashboard?section=progress",
-        icon: BookmarkCheck,
       },
       {
         title: "Calendar",

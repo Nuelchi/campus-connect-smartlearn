@@ -13,6 +13,7 @@ interface SearchUserResult {
   last_name: string;
   department: string;
   role: string;
+  username: string;
 }
 
 export function useEmailUserSearch() {
@@ -32,7 +33,7 @@ export function useEmailUserSearch() {
     setFoundUser(null);
     
     try {
-      // Use the new database function to search by email
+      // Use the updated database function to search by email
       const { data, error } = await supabase
         .rpc("search_user_by_email" as any, {
           search_email: email.trim().toLowerCase(),
@@ -49,6 +50,7 @@ export function useEmailUserSearch() {
           first_name: userData.first_name,
           last_name: userData.last_name,
           department: userData.department,
+          username: userData.username,
           created_at: new Date().toISOString(), // We don't need this for display
           updated_at: new Date().toISOString(), // We don't need this for display
           avatar_url: null, // Not returned by our function

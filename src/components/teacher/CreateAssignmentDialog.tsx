@@ -11,6 +11,7 @@ import { CalendarIcon, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CreateAssignmentDialogProps {
   courseId: string;
@@ -21,6 +22,7 @@ export default function CreateAssignmentDialog({ courseId, onAssignmentCreated }
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [deadline, setDeadline] = useState<Date>();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -31,9 +33,18 @@ export default function CreateAssignmentDialog({ courseId, onAssignmentCreated }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+    
     setLoading(true);
 
     try {
+      // Get the user's profile to include their name
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("id", user.id)
+        .single();
+
       const { error } = await supabase
         .from("assignments")
         .insert({
@@ -44,6 +55,8 @@ export default function CreateAssignmentDialog({ courseId, onAssignmentCreated }
           deadline: deadline?.toISOString(),
           max_submissions: formData.maxSubmissions,
           max_file_size: formData.maxFileSize,
+          lecturer_first_name: profile?.first_name || null,
+          lecturer_last_name: profile?.last_name || null,
         });
 
       if (error) throw error;

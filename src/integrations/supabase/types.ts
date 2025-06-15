@@ -21,6 +21,8 @@ export type Database = {
           graded_by: string | null
           id: string
           student_id: string
+          submission_type: string | null
+          submission_url: string | null
           submitted_at: string
         }
         Insert: {
@@ -34,6 +36,8 @@ export type Database = {
           graded_by?: string | null
           id?: string
           student_id: string
+          submission_type?: string | null
+          submission_url?: string | null
           submitted_at?: string
         }
         Update: {
@@ -47,6 +51,8 @@ export type Database = {
           graded_by?: string | null
           id?: string
           student_id?: string
+          submission_type?: string | null
+          submission_url?: string | null
           submitted_at?: string
         }
         Relationships: [
@@ -68,6 +74,8 @@ export type Database = {
           description: string | null
           id: string
           instructions: string | null
+          lecturer_first_name: string | null
+          lecturer_last_name: string | null
           max_file_size: number | null
           max_submissions: number | null
           title: string
@@ -80,6 +88,8 @@ export type Database = {
           description?: string | null
           id?: string
           instructions?: string | null
+          lecturer_first_name?: string | null
+          lecturer_last_name?: string | null
           max_file_size?: number | null
           max_submissions?: number | null
           title: string
@@ -92,6 +102,8 @@ export type Database = {
           description?: string | null
           id?: string
           instructions?: string | null
+          lecturer_first_name?: string | null
+          lecturer_last_name?: string | null
           max_file_size?: number | null
           max_submissions?: number | null
           title?: string

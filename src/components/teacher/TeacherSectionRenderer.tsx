@@ -9,6 +9,7 @@ import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import CreateCourseDialog from "./CreateCourseDialog";
 import StudentManagement from "@/components/dashboard/StudentManagement";
 import AssignmentCreationInterface from "./AssignmentCreationInterface";
+import AssignmentSubmissions from "./AssignmentSubmissions";
 import { useCourses } from "@/hooks/useCourses";
 
 interface TeacherSectionRendererProps {
@@ -39,16 +40,7 @@ export default function TeacherSectionRenderer({ section }: TeacherSectionRender
     case "students":
       return <StudentManagement />;
     case "assignments":
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle>Assignment Management</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Assignment management functionality coming soon...</p>
-          </CardContent>
-        </Card>
-      );
+      return <AssignmentSubmissions />;
     case "create-assignment":
       return <AssignmentCreationInterface />;
     case "analytics":

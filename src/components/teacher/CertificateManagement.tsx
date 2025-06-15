@@ -51,12 +51,12 @@ export default function CertificateManagement() {
       // For each course, get enrolled students and check if they have certificates
       const coursesWithStudents = await Promise.all(
         (coursesData || []).map(async (course) => {
-          // Get enrolled students
+          // Get enrolled students with their profile information
           const { data: enrollments, error: enrollmentsError } = await supabase
             .from("enrollments")
             .select(`
               student_id,
-              profiles:student_id(id, first_name, last_name)
+              profiles!enrollments_student_id_fkey(id, first_name, last_name)
             `)
             .eq("course_id", course.id)
             .eq("status", "active");

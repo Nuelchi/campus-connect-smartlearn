@@ -51,14 +51,14 @@ const HeroSection = () => (
         {/* User Types */}
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-7 items-center lg:items-start justify-center lg:justify-start">
           <div className="flex items-center gap-2">
-            <User size={28} sm:size={32} className="text-blue-500" />
+            <User className="text-blue-500" size={32} />
             <div className="text-center sm:text-left">
               <div className="font-bold text-sm sm:text-base">Students</div>
               <div className="text-xs text-gray-500">Join, learn, ask, achieve</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <BookOpen size={28} sm:size={32} className="text-emerald-500" />
+            <BookOpen className="text-emerald-500" size={32} />
             <div className="text-center sm:text-left">
               <div className="font-bold text-sm sm:text-base">Teachers</div>
               <div className="text-xs text-gray-500">Create, organize, inspire</div>

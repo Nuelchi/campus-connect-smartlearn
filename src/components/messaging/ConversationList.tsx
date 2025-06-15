@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import UnreadIndicator from "./UnreadIndicator";
 
 type Conversation = Tables<"conversations">;
 type Profile = Tables<"profiles">;
@@ -13,12 +14,14 @@ interface ConversationListProps {
   conversations: Conversation[];
   activeConversationId: string | null;
   onSelectConversation: (conversationId: string) => void;
+  unreadCounts?: Record<string, number>;
 }
 
 export default function ConversationList({
   conversations,
   activeConversationId,
-  onSelectConversation
+  onSelectConversation,
+  unreadCounts = {}
 }: ConversationListProps) {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
@@ -89,28 +92,38 @@ export default function ConversationList({
         const otherParticipant = getOtherParticipant(conversation);
         const displayName = getDisplayName(otherParticipant);
         const initials = getInitials(otherParticipant);
+        const unreadCount = unreadCounts[conversation.id] || 0;
         
         return (
           <div
             key={conversation.id}
             className={cn(
-              "flex items-center gap-3 p-4 cursor-pointer hover:bg-muted/50 border-b border-border/50",
+              "flex items-center gap-3 p-4 cursor-pointer hover:bg-muted/50 border-b border-border/50 relative",
               activeConversationId === conversation.id && "bg-muted"
             )}
             onClick={() => onSelectConversation(conversation.id)}
           >
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              {unreadCount > 0 && (
+                <div className="absolute -top-1 -right-1">
+                  <UnreadIndicator count={unreadCount} />
+                </div>
+              )}
+            </div>
             
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
                 <p className="font-medium text-sm truncate">{displayName}</p>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(conversation.last_message_at).toLocaleDateString()}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(conversation.last_message_at).toLocaleDateString()}
+                  </span>
+                </div>
               </div>
               <p className="text-xs text-muted-foreground">
                 {otherParticipant?.department || "Click to start chatting"}

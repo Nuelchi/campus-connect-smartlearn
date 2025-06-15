@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CourseManagement from "@/components/CourseManagement";
 import SettingsPanel from "@/components/dashboard/SettingsPanel";
@@ -7,7 +6,7 @@ import AssignmentManagement from "@/components/dashboard/AssignmentManagement";
 import CertificateCenter from "@/components/dashboard/CertificateCenter";
 import StudentGrades from "@/components/student/StudentGrades";
 import AcademicCalendar from "@/components/student/AcademicCalendar";
-import MessagingCenter from "@/components/messaging/MessagingCenter";
+import MessagingCenterV2 from "@/components/messaging/MessagingCenterV2";
 import { useAuth } from "@/hooks/useAuth";
 import { useCourses } from "@/hooks/useCourses";
 import CourseCard from "@/components/CourseCard";
@@ -89,7 +88,7 @@ export default function StudentSectionRenderer({ section }: StudentSectionRender
         </div>
       );
     case "messaging":
-      return <MessagingCenter />;
+      return <MessagingCenterV2 />;
     case "grades":
       return <StudentGrades />;
     case "certificates":

@@ -14,7 +14,7 @@ export function useCourses() {
   const { user, role } = useAuth();
 
   const fetchCourses = async () => {
-    setLoading(true);
+    console.log("Fetching courses for role:", role, "user:", user?.id);
     
     let query = supabase.from("courses").select("*");
     
@@ -30,14 +30,18 @@ export function useCourses() {
     if (error) {
       console.error("Error fetching courses:", error);
     } else {
+      console.log("Fetched courses:", data);
       setCourses(data || []);
     }
-    
-    setLoading(false);
   };
 
   const fetchEnrollments = async () => {
-    if (!user || role !== "student") return;
+    if (!user || role !== "student") {
+      console.log("Not fetching enrollments - no user or not student role");
+      return;
+    }
+    
+    console.log("Fetching enrollments for user:", user.id);
     
     const { data, error } = await supabase
       .from("enrollments")
@@ -47,6 +51,7 @@ export function useCourses() {
     if (error) {
       console.error("Error fetching enrollments:", error);
     } else {
+      console.log("Fetched enrollments:", data);
       setEnrollments(data || []);
     }
   };
@@ -86,16 +91,26 @@ export function useCourses() {
   };
 
   const isEnrolledInCourse = (courseId: string) => {
-    return enrollments.some(enrollment => 
+    const enrolled = enrollments.some(enrollment => 
       enrollment.course_id === courseId && enrollment.status === "active"
     );
+    console.log(`Checking enrollment for course ${courseId}:`, enrolled);
+    return enrolled;
   };
 
   useEffect(() => {
-    if (user && role) {
-      fetchCourses();
-      fetchEnrollments();
-    }
+    const loadData = async () => {
+      if (user && role) {
+        setLoading(true);
+        await Promise.all([
+          fetchCourses(),
+          fetchEnrollments()
+        ]);
+        setLoading(false);
+      }
+    };
+    
+    loadData();
   }, [user, role]);
 
   return {

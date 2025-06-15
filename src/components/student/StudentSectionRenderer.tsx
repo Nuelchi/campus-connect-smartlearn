@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CourseManagement from "@/components/CourseManagement";
 import SettingsPanel from "@/components/dashboard/SettingsPanel";
@@ -15,13 +14,23 @@ interface StudentSectionRendererProps {
 
 export default function StudentSectionRenderer({ section }: StudentSectionRendererProps) {
   const { role } = useAuth();
-  const { courses, loading, isEnrolledInCourse } = useCourses();
+  const { courses, loading, isEnrolledInCourse, enrollments } = useCourses();
   
   switch (section) {
     case "courses":
       return <CourseManagement />;
     case "my-courses":
-      const enrolledCourses = courses.filter(course => isEnrolledInCourse(course.id));
+      console.log("All courses:", courses);
+      console.log("All enrollments:", enrollments);
+      console.log("User role:", role);
+      
+      const enrolledCourses = courses.filter(course => {
+        const isEnrolled = isEnrolledInCourse(course.id);
+        console.log(`Course ${course.title} (${course.id}) - enrolled:`, isEnrolled);
+        return isEnrolled;
+      });
+      
+      console.log("Filtered enrolled courses:", enrolledCourses);
       
       return (
         <Card>
@@ -39,6 +48,9 @@ export default function StudentSectionRenderer({ section }: StudentSectionRender
                 <p className="text-sm text-muted-foreground">
                   Browse available courses to start your learning journey!
                 </p>
+                <div className="mt-4 text-xs text-gray-400">
+                  Debug: Found {courses.length} total courses, {enrollments.length} enrollments
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

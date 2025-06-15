@@ -5,8 +5,25 @@ import DashboardWelcome from "@/components/dashboard/DashboardWelcome";
 import DashboardStats from "@/components/DashboardStats";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
+import StudentSectionRenderer from "@/components/student/StudentSectionRenderer";
+import { useSearchParams } from "react-router-dom";
 
 export default function StudentDashboard() {
+  const [searchParams] = useSearchParams();
+  const section = searchParams.get("section");
+
+  // If there's a section parameter, render that section
+  if (section) {
+    return (
+      <DashboardLayout 
+        title="Student Dashboard" 
+        subtitle="Manage your learning journey"
+      >
+        <StudentSectionRenderer section={section} />
+      </DashboardLayout>
+    );
+  }
+
   // Mock data - replace with real data from your API
   const stats = {
     enrolledCourses: 5,
@@ -19,19 +36,19 @@ export default function StudentDashboard() {
       title: "Browse Courses",
       description: "Find new courses to enroll in",
       icon: <BookOpen className="h-6 w-6" />,
-      onClick: () => console.log("Browse courses"),
+      onClick: () => window.location.href = "/dashboard?section=courses",
     },
     {
       title: "View Assignments",
       description: "Check your pending assignments",
       icon: <Calendar className="h-6 w-6" />,
-      onClick: () => console.log("View assignments"),
+      onClick: () => window.location.href = "/dashboard?section=assignments",
     },
     {
       title: "My Certificates",
       description: "View your earned certificates",
       icon: <Award className="h-6 w-6" />,
-      onClick: () => console.log("View certificates"),
+      onClick: () => window.location.href = "/dashboard?section=certificates",
     },
   ];
 

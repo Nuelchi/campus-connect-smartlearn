@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Filter, Building2 } from "lucide-react";
 import CourseCard from "./CourseCard";
 import CreateCourseDialog from "./CreateCourseDialog";
 import { useCourses } from "@/hooks/useCourses";
@@ -13,15 +14,56 @@ import { supabase } from "@/integrations/supabase/client";
 
 export default function CourseManagement() {
   const { courses, loading, fetchCourses, enrollInCourse, isEnrolledInCourse } = useCourses();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [enrollmentCounts, setEnrollmentCounts] = useState<Record<string, number>>({});
+  const [userDepartment, setUserDepartment] = useState<string | null>(null);
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
 
-  const filteredCourses = courses.filter(course =>
-    course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    course.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    course.category?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Fetch user's department
+  useEffect(() => {
+    const fetchUserDepartment = async () => {
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("department")
+          .eq("id", user.id)
+          .single();
+        
+        if (profile?.department) {
+          setUserDepartment(profile.department);
+          setSelectedDepartment(profile.department); // Default to user's department
+        }
+      }
+    };
+
+    fetchUserDepartment();
+  }, [user]);
+
+  // Extract unique departments and categories from courses
+  useEffect(() => {
+    const uniqueDepartments = [...new Set(courses.map(course => course.category).filter(Boolean))];
+    const uniqueCategories = [...new Set(courses.map(course => course.category).filter(Boolean))];
+    
+    setDepartments(uniqueDepartments);
+    setCategories(uniqueCategories);
+  }, [courses]);
+
+  const filteredCourses = courses.filter(course => {
+    const matchesSearch = searchTerm === "" || 
+      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.category?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesCategory = selectedCategory === "all" || course.category === selectedCategory;
+    
+    const matchesDepartment = selectedDepartment === "all" || course.category === selectedDepartment;
+
+    return matchesSearch && matchesCategory && matchesDepartment;
+  });
 
   const handleEnroll = async (courseId: string) => {
     const success = await enrollInCourse(courseId);
@@ -49,7 +91,6 @@ export default function CourseManagement() {
     const fetchEnrollmentCounts = async () => {
       const counts: Record<string, number> = {};
       for (const course of courses) {
-        // This is a simplified version - in a real app you'd batch these requests
         const { count } = await supabase
           .from("enrollments")
           .select("*", { count: "exact", head: true })
@@ -87,6 +128,12 @@ export default function CourseManagement() {
               : "Manage your courses and track student progress"
             }
           </p>
+          {userDepartment && role === "student" && (
+            <p className="text-sm text-blue-600 mt-1">
+              <Building2 className="inline h-4 w-4 mr-1" />
+              Your Department: {userDepartment}
+            </p>
+          )}
         </div>
         {(role === "teacher" || role === "admin") && (
           <CreateCourseDialog onCourseCreated={fetchCourses} />
@@ -96,8 +143,8 @@ export default function CourseManagement() {
       {/* Search and Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
+          <div className="flex gap-4 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search courses by title, description, or category..."
@@ -106,6 +153,35 @@ export default function CourseManagement() {
                 className="pl-10"
               />
             </div>
+            
+            <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select Department" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Departments</SelectItem>
+                {departments.map((dept) => (
+                  <SelectItem key={dept} value={dept}>
+                    {dept}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
             <Button variant="outline">
               <Filter className="mr-2 h-4 w-4" />
               Filter
@@ -121,8 +197,8 @@ export default function CourseManagement() {
             <div className="text-center py-8">
               <h3 className="text-lg font-semibold mb-2">No courses found</h3>
               <p className="text-muted-foreground">
-                {searchTerm 
-                  ? "Try adjusting your search terms"
+                {searchTerm || selectedCategory !== "all" || selectedDepartment !== "all"
+                  ? "Try adjusting your search terms or filters"
                   : role === "teacher" 
                     ? "Create your first course to get started"
                     : "Check back later for new courses"

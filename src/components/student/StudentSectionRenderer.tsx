@@ -1,79 +1,64 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import MessagingCenter from "./MessagingCenter";
-import Gradebook from "./Gradebook";
-import TeacherCourseManagement from "./TeacherCourseManagement";
+import CourseManagement from "@/components/CourseManagement";
 import SettingsPanel from "@/components/dashboard/SettingsPanel";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
-import CreateCourseDialog from "./CreateCourseDialog";
-import { useCourses } from "@/hooks/useCourses";
+import AssignmentManagement from "@/components/dashboard/AssignmentManagement";
+import CertificateCenter from "@/components/dashboard/CertificateCenter";
 
-interface TeacherSectionRendererProps {
+interface StudentSectionRendererProps {
   section: string | null;
 }
 
-export default function TeacherSectionRenderer({ section }: TeacherSectionRendererProps) {
-  const { fetchCourses } = useCourses();
-
+export default function StudentSectionRenderer({ section }: StudentSectionRendererProps) {
   switch (section) {
-    case "messaging":
-      return <MessagingCenter />;
-    case "gradebook":
-      return <Gradebook />;
-    case "course-management":
-      return <TeacherCourseManagement />;
-    case "create-course":
+    case "courses":
+      return <CourseManagement />;
+    case "my-courses":
       return (
         <Card>
           <CardHeader>
-            <CardTitle>Create New Course</CardTitle>
+            <CardTitle>My Enrolled Courses</CardTitle>
           </CardHeader>
           <CardContent>
-            <CreateCourseDialog onCourseCreated={fetchCourses} />
-          </CardContent>
-        </Card>
-      );
-    case "students":
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle>Student Management</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Student management functionality coming soon...</p>
+            <p>My courses functionality coming soon...</p>
           </CardContent>
         </Card>
       );
     case "assignments":
+      return <AssignmentManagement />;
+    case "submit-assignment":
       return (
         <Card>
           <CardHeader>
-            <CardTitle>Assignment Management</CardTitle>
+            <CardTitle>Submit Assignment</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Assignment management functionality coming soon...</p>
+            <p>Assignment submission functionality coming soon...</p>
           </CardContent>
         </Card>
       );
-    case "create-assignment":
+    case "grades":
       return (
         <Card>
           <CardHeader>
-            <CardTitle>Create Assignment</CardTitle>
+            <CardTitle>My Grades</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Create assignment functionality coming soon...</p>
+            <p>Grades view functionality coming soon...</p>
           </CardContent>
         </Card>
       );
-    case "analytics":
+    case "certificates":
+      return <CertificateCenter />;
+    case "progress":
       return (
         <Card>
           <CardHeader>
-            <CardTitle>Analytics Dashboard</CardTitle>
+            <CardTitle>Learning Progress</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Analytics dashboard coming soon...</p>
+            <p>Progress tracking functionality coming soon...</p>
           </CardContent>
         </Card>
       );
@@ -81,7 +66,7 @@ export default function TeacherSectionRenderer({ section }: TeacherSectionRender
       return (
         <Card>
           <CardHeader>
-            <CardTitle>Calendar</CardTitle>
+            <CardTitle>Academic Calendar</CardTitle>
           </CardHeader>
           <CardContent>
             <p>Calendar functionality coming soon...</p>

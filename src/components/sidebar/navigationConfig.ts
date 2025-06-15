@@ -12,6 +12,12 @@ import {
   MessageSquare,
   Bell,
   GraduationCap,
+  Upload,
+  Award,
+  BookmarkCheck,
+  PlusCircle,
+  Search,
+  Library,
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -33,9 +39,19 @@ export const getMainNavItems = (role: string | null): NavigationItem[] => {
     return [
       ...commonItems,
       {
-        title: "Course Management",
+        title: "My Courses",
         url: "/dashboard?tab=courses",
         icon: BookOpen,
+      },
+      {
+        title: "Create Course",
+        url: "/dashboard?section=create-course",
+        icon: PlusCircle,
+      },
+      {
+        title: "Course Management",
+        url: "/dashboard?section=course-management",
+        icon: Library,
       },
       {
         title: "Students",
@@ -48,6 +64,11 @@ export const getMainNavItems = (role: string | null): NavigationItem[] => {
         icon: FileText,
       },
       {
+        title: "Create Assignment",
+        url: "/dashboard?section=create-assignment",
+        icon: Upload,
+      },
+      {
         title: "Gradebook",
         url: "/dashboard?section=gradebook",
         icon: ClipboardList,
@@ -57,6 +78,11 @@ export const getMainNavItems = (role: string | null): NavigationItem[] => {
         url: "/dashboard?section=messaging",
         icon: MessageSquare,
       },
+      {
+        title: "Analytics",
+        url: "/dashboard?section=analytics",
+        icon: BarChart,
+      },
     ];
   }
 
@@ -64,8 +90,13 @@ export const getMainNavItems = (role: string | null): NavigationItem[] => {
     return [
       ...commonItems,
       {
-        title: "My Courses",
+        title: "Browse Courses",
         url: "/dashboard?section=courses",
+        icon: Search,
+      },
+      {
+        title: "My Courses",
+        url: "/dashboard?section=my-courses",
         icon: BookOpen,
       },
       {
@@ -74,9 +105,24 @@ export const getMainNavItems = (role: string | null): NavigationItem[] => {
         icon: FileText,
       },
       {
+        title: "Submit Assignment",
+        url: "/dashboard?section=submit-assignment",
+        icon: Upload,
+      },
+      {
         title: "Grades",
         url: "/dashboard?section=grades",
         icon: GraduationCap,
+      },
+      {
+        title: "Certificates",
+        url: "/dashboard?section=certificates",
+        icon: Award,
+      },
+      {
+        title: "Progress Tracking",
+        url: "/dashboard?section=progress",
+        icon: BookmarkCheck,
       },
       {
         title: "Calendar",
@@ -100,14 +146,24 @@ export const getMainNavItems = (role: string | null): NavigationItem[] => {
         icon: BookOpen,
       },
       {
+        title: "Teacher Approval",
+        url: "/dashboard?section=teacher-approval",
+        icon: ClipboardList,
+      },
+      {
         title: "Analytics",
         url: "/dashboard?section=analytics",
         icon: BarChart,
       },
       {
-        title: "Settings",
+        title: "System Settings",
         url: "/dashboard?section=settings",
         icon: Settings,
+      },
+      {
+        title: "Reports",
+        url: "/dashboard?section=reports",
+        icon: FileText,
       },
     ];
   }
@@ -127,8 +183,8 @@ export const supportNavItems: NavigationItem[] = [
     icon: HelpCircle,
   },
   {
-    title: "Settings",
-    url: "/dashboard?section=settings",
+    title: "Account Settings",
+    url: "/dashboard?section=account",
     icon: Settings,
   },
 ];

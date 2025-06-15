@@ -1,10 +1,9 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Users, BookOpen, Download, Eye } from "lucide-react";
+import { ArrowLeft, Calendar, Users, BookOpen, Download, Eye, Maximize, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +22,8 @@ export default function CourseDetail() {
   const [modules, setModules] = useState<CourseModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [selectedMaterial, setSelectedMaterial] = useState<CourseMaterial | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     if (!courseId) return;
@@ -127,6 +128,123 @@ export default function CourseDetail() {
     }
   };
 
+  const renderMaterialViewer = (material: CourseMaterial) => {
+    const embedStyle = "w-full h-full border-0 rounded-lg";
+    
+    if (material.file_url?.endsWith('.pdf')) {
+      return (
+        <div className="relative w-full h-[600px] bg-gray-100 rounded-lg overflow-hidden">
+          <div className="absolute top-3 right-3 z-10 flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setIsFullscreen(true)}
+              className="bg-black/70 text-white hover:bg-black/80"
+            >
+              <Maximize className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setSelectedMaterial(null)}
+              className="bg-black/70 text-white hover:bg-black/80"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <embed 
+            src={material.file_url}
+            type="application/pdf"
+            className={embedStyle}
+            style={{ height: '600px' }}
+          />
+        </div>
+      );
+    }
+    
+    if (material.file_url?.match(/\.(mp4|mov|mkv|webm)$/)) {
+      return (
+        <div className="relative w-full h-[600px] bg-black rounded-lg overflow-hidden">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setSelectedMaterial(null)}
+            className="absolute top-3 right-3 z-10 bg-black/70 text-white hover:bg-black/80"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          <video 
+            controls 
+            className={`${embedStyle} h-[600px] object-contain`}
+            src={material.file_url}
+          >
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      );
+    }
+    
+    if (material.external_url?.includes('youtube.com') || material.external_url?.includes('youtu.be')) {
+      const videoId = material.external_url.match(/(?:youtube\.com\/(?:.*v=|.*\/|.*embed\/)|youtu\.be\/)([^"&?\/\s]+)/)?.[1];
+      if (videoId) {
+        return (
+          <div className="relative w-full h-[600px] bg-black rounded-lg overflow-hidden">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setSelectedMaterial(null)}
+              className="absolute top-3 right-3 z-10 bg-black/70 text-white hover:bg-black/80"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}`}
+              className={`${embedStyle} h-[600px]`}
+              allowFullScreen
+            />
+          </div>
+        );
+      }
+    }
+    
+    if (material.file_url?.endsWith('.docx')) {
+      return (
+        <div className="relative w-full h-[600px] bg-gray-100 rounded-lg overflow-hidden">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setSelectedMaterial(null)}
+            className="absolute top-3 right-3 z-10 bg-black/70 text-white hover:bg-black/80"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          <iframe
+            src={`https://docs.google.com/gview?url=${material.file_url}&embedded=true`}
+            className={`${embedStyle} h-[600px]`}
+          />
+        </div>
+      );
+    }
+    
+    // Default case - try to display the file
+    return (
+      <div className="relative w-full h-[600px] bg-gray-100 rounded-lg overflow-hidden">
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => setSelectedMaterial(null)}
+          className="absolute top-3 right-3 z-10 bg-black/70 text-white hover:bg-black/80"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+        <iframe
+          src={material.file_url || material.external_url || ''}
+          className={`${embedStyle} h-[600px]`}
+        />
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -150,6 +268,28 @@ export default function CourseDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900 p-6">
+      {/* Fullscreen PDF Modal */}
+      {isFullscreen && selectedMaterial && (
+        <div className="fixed inset-0 z-50 bg-black">
+          <div className="absolute top-4 right-4 z-10">
+            <Button
+              onClick={() => setIsFullscreen(false)}
+              variant="secondary"
+              size="sm"
+              className="bg-white/20 text-white hover:bg-white/30"
+            >
+              <X className="h-4 w-4" />
+              Exit Fullscreen
+            </Button>
+          </div>
+          <embed 
+            src={selectedMaterial.file_url || ''}
+            type="application/pdf"
+            className="w-full h-full"
+          />
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
@@ -225,13 +365,30 @@ export default function CourseDetail() {
           </CardHeader>
         </Card>
 
-        {/* Course Content */}
+        {/* Main Content Area */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Syllabus */}
-            {course.syllabus && (
+          {/* Content Viewer - Full Width if Material Selected */}
+          {selectedMaterial && (
+            <div className="lg:col-span-3 mb-6">
               <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Viewing: {selectedMaterial.title}</span>
+                    <Badge variant="outline">{selectedMaterial.content_type}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {renderMaterialViewer(selectedMaterial)}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Main Content */}
+          <div className={selectedMaterial ? "lg:col-span-2" : "lg:col-span-2"}>
+            {/* Syllabus */}
+            {course?.syllabus && (
+              <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl mb-6">
                 <CardHeader>
                   <CardTitle>Course Syllabus</CardTitle>
                 </CardHeader>
@@ -268,7 +425,7 @@ export default function CourseDetail() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className={selectedMaterial ? "lg:col-span-1" : "space-y-6"}>
             {/* Course Materials */}
             {(isEnrolled || role === "teacher" || role === "admin") && materials.length > 0 && (
               <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
@@ -283,8 +440,10 @@ export default function CourseDetail() {
                     {materials.map((material) => (
                       <div 
                         key={material.id}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-                        onClick={() => handleMaterialClick(material)}
+                        className={`flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
+                          selectedMaterial?.id === material.id ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''
+                        }`}
+                        onClick={() => setSelectedMaterial(material)}
                       >
                         <div className="flex-1">
                           <h4 className="font-medium text-sm">{material.title}</h4>
@@ -292,7 +451,7 @@ export default function CourseDetail() {
                         </div>
                         <div className="flex items-center gap-2">
                           {material.file_url && (
-                            <Download className="h-4 w-4 text-blue-500" />
+                            <Eye className="h-4 w-4 text-blue-500" />
                           )}
                           {material.external_url && (
                             <Eye className="h-4 w-4 text-green-500" />

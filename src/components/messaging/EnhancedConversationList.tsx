@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -77,36 +76,30 @@ export default function EnhancedConversationList({
         // Find course connection between teacher and student
         let courseInfo = null;
         
-        // Get teacher's courses with instructor profile info
+        // Get teacher's courses
         const { data: teacherCourses } = await supabase
           .from("courses")
-          .select(`
-            id, 
-            title,
-            instructor_id,
-            profiles!courses_instructor_id_fkey(first_name, last_name, username)
-          `)
+          .select("id, title, instructor_id")
           .eq("instructor_id", user.id);
 
         if (teacherCourses && teacherCourses.length > 0) {
           // Check if the other participant is enrolled in any of these courses
           const { data: enrollment } = await supabase
             .from("enrollments")
-            .select(`
-              course_id, 
-              courses(
-                id, 
-                title,
-                profiles!courses_instructor_id_fkey(first_name, last_name, username)
-              )
-            `)
+            .select("course_id, courses(id, title, instructor_id)")
             .eq("student_id", otherParticipantId)
             .in("course_id", teacherCourses.map(c => c.id))
             .limit(1)
             .single();
 
           if (enrollment && enrollment.courses) {
-            const instructorProfile = enrollment.courses.profiles;
+            // Get instructor profile information separately
+            const { data: instructorProfile } = await supabase
+              .from("profiles")
+              .select("first_name, last_name, username")
+              .eq("id", enrollment.courses.instructor_id)
+              .single();
+
             const instructorName = instructorProfile?.username || 
               (instructorProfile?.first_name || instructorProfile?.last_name 
                 ? `${instructorProfile.first_name || ""} ${instructorProfile.last_name || ""}`.trim()

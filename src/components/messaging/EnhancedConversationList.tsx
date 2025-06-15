@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -20,12 +21,13 @@ interface ConversationWithDetails extends Conversation {
   course?: {
     id: string;
     title: string;
+    instructor_name: string | null;
   };
 }
 
 interface GroupedConversations {
   [courseId: string]: {
-    course: { id: string; title: string };
+    course: { id: string; title: string; instructor_name: string | null };
     conversations: ConversationWithDetails[];
   };
 }
@@ -75,24 +77,46 @@ export default function EnhancedConversationList({
         // Find course connection between teacher and student
         let courseInfo = null;
         
-        // Get teacher's courses
+        // Get teacher's courses with instructor profile info
         const { data: teacherCourses } = await supabase
           .from("courses")
-          .select("id, title")
+          .select(`
+            id, 
+            title,
+            instructor_id,
+            profiles!courses_instructor_id_fkey(first_name, last_name, username)
+          `)
           .eq("instructor_id", user.id);
 
         if (teacherCourses && teacherCourses.length > 0) {
           // Check if the other participant is enrolled in any of these courses
           const { data: enrollment } = await supabase
             .from("enrollments")
-            .select("course_id, courses(id, title)")
+            .select(`
+              course_id, 
+              courses(
+                id, 
+                title,
+                profiles!courses_instructor_id_fkey(first_name, last_name, username)
+              )
+            `)
             .eq("student_id", otherParticipantId)
             .in("course_id", teacherCourses.map(c => c.id))
             .limit(1)
             .single();
 
-          if (enrollment) {
-            courseInfo = enrollment.courses;
+          if (enrollment && enrollment.courses) {
+            const instructorProfile = enrollment.courses.profiles;
+            const instructorName = instructorProfile?.username || 
+              (instructorProfile?.first_name || instructorProfile?.last_name 
+                ? `${instructorProfile.first_name || ""} ${instructorProfile.last_name || ""}`.trim()
+                : null);
+
+            courseInfo = {
+              id: enrollment.courses.id,
+              title: enrollment.courses.title,
+              instructor_name: instructorName
+            };
           }
         }
 
@@ -111,10 +135,11 @@ export default function EnhancedConversationList({
       detailedConversations.forEach(conv => {
         const courseId = conv.course?.id || 'general';
         const courseTitle = conv.course?.title || 'General Messages';
+        const instructorName = conv.course?.instructor_name || null;
         
         if (!grouped[courseId]) {
           grouped[courseId] = {
-            course: { id: courseId, title: courseTitle },
+            course: { id: courseId, title: courseTitle, instructor_name: instructorName },
             conversations: []
           };
         }
@@ -130,11 +155,7 @@ export default function EnhancedConversationList({
     }
   };
 
-  const getEmailInitials = (email: string, count: number = 4): string => {
-    return email.split('@')[0].substring(0, count).toUpperCase();
-  };
-
-  const getDisplayName = async (participant?: { id: string; first_name: string | null; last_name: string | null; username: string | null }) => {
+  const getDisplayName = (participant?: { id: string; first_name: string | null; last_name: string | null; username: string | null }) => {
     if (!participant) return "Unknown User";
 
     // First priority: username
@@ -147,17 +168,25 @@ export default function EnhancedConversationList({
       return `${participant.first_name || ""} ${participant.last_name || ""}`.trim();
     }
 
-    // Third priority: email initials
-    try {
-      const { data: authUser } = await supabase.auth.getUser();
-      if (authUser?.user?.email) {
-        return getEmailInitials(authUser.user.email);
-      }
-    } catch (error) {
-      console.error("Error fetching user email:", error);
+    return "User";
+  };
+
+  const getInitials = (participant?: { id: string; first_name: string | null; last_name: string | null; username: string | null }) => {
+    if (!participant) return "U";
+
+    // First try username initials
+    if (participant.username) {
+      return participant.username.substring(0, 2).toUpperCase();
     }
 
-    return "Unknown User";
+    // Then try first + last name initials
+    const firstName = participant.first_name || "";
+    const lastName = participant.last_name || "";
+    if (firstName || lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || "U";
+    }
+
+    return "U";
   };
 
   if (loading) {
@@ -187,10 +216,17 @@ export default function EnhancedConversationList({
           <div key={courseId}>
             <div className="flex items-center gap-2 mb-3">
               <GraduationCap className="h-4 w-4 text-primary" />
-              <h4 className="text-sm font-semibold text-muted-foreground">
-                {group.course.title}
-              </h4>
-              <Badge variant="secondary" className="text-xs">
+              <div className="flex flex-col">
+                <h4 className="text-sm font-semibold text-muted-foreground">
+                  {group.course.title}
+                </h4>
+                {group.course.instructor_name && (
+                  <p className="text-xs text-muted-foreground/70">
+                    Instructor: {group.course.instructor_name}
+                  </p>
+                )}
+              </div>
+              <Badge variant="secondary" className="text-xs ml-auto">
                 {group.conversations.length}
               </Badge>
             </div>
@@ -199,11 +235,7 @@ export default function EnhancedConversationList({
               {group.conversations.map((conversation) => {
                 const unreadCount = unreadCounts[conversation.id] || 0;
                 const isActive = activeConversationId === conversation.id;
-                
-                const displayName = conversation.otherParticipant?.username || 
-                  (conversation.otherParticipant?.first_name || conversation.otherParticipant?.last_name 
-                    ? `${conversation.otherParticipant.first_name || ""} ${conversation.otherParticipant.last_name || ""}`.trim()
-                    : "User");
+                const displayName = getDisplayName(conversation.otherParticipant);
                 
                 return (
                   <div
@@ -218,18 +250,22 @@ export default function EnhancedConversationList({
                     <div className="flex items-start gap-3">
                       <Avatar className="h-10 w-10">
                         <AvatarFallback className="text-sm">
-                          {conversation.otherParticipant?.username 
-                            ? conversation.otherParticipant.username.substring(0, 2).toUpperCase()
-                            : displayName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2)
-                          }
+                          {getInitials(conversation.otherParticipant)}
                         </AvatarFallback>
                       </Avatar>
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h5 className="font-medium text-sm truncate">
-                            {displayName}
-                          </h5>
+                          <div className="flex flex-col">
+                            <h5 className="font-medium text-sm truncate">
+                              {displayName}
+                            </h5>
+                            {conversation.otherParticipant?.first_name || conversation.otherParticipant?.last_name ? (
+                              <p className="text-xs text-muted-foreground">
+                                {conversation.otherParticipant.first_name} {conversation.otherParticipant.last_name}
+                              </p>
+                            ) : null}
+                          </div>
                           {unreadCount > 0 && (
                             <UnreadIndicator count={unreadCount} />
                           )}

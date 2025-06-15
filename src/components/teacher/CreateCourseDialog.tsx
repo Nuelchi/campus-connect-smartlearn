@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -26,6 +25,8 @@ export default function CreateCourseDialog({ onCourseCreated }: CreateCourseDial
     department: "",
     syllabus: "",
     contentType: "document", // 'video' or 'document'
+    instructorFirstName: "",
+    instructorLastName: "",
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [customCategory, setCustomCategory] = useState("");
@@ -105,6 +106,21 @@ export default function CreateCourseDialog({ onCourseCreated }: CreateCourseDial
 
     setLoading(true);
     try {
+      // First update the user's profile with instructor name if provided
+      if (formData.instructorFirstName || formData.instructorLastName) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .upsert({
+            id: user.id,
+            first_name: formData.instructorFirstName || null,
+            last_name: formData.instructorLastName || null,
+          });
+
+        if (profileError) {
+          console.error("Error updating profile:", profileError);
+        }
+      }
+
       const { error } = await supabase
         .from("courses")
         .insert({
@@ -140,6 +156,8 @@ export default function CreateCourseDialog({ onCourseCreated }: CreateCourseDial
         department: "",
         syllabus: "",
         contentType: "document",
+        instructorFirstName: "",
+        instructorLastName: "",
       });
       setSelectedFiles([]);
       setCustomCategory("");
@@ -190,6 +208,27 @@ export default function CreateCourseDialog({ onCourseCreated }: CreateCourseDial
               placeholder="Course description"
               rows={3}
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="instructorFirstName">Instructor First Name</Label>
+              <Input
+                id="instructorFirstName"
+                value={formData.instructorFirstName}
+                onChange={(e) => setFormData(prev => ({ ...prev, instructorFirstName: e.target.value }))}
+                placeholder="Your first name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="instructorLastName">Instructor Last Name</Label>
+              <Input
+                id="instructorLastName"
+                value={formData.instructorLastName}
+                onChange={(e) => setFormData(prev => ({ ...prev, instructorLastName: e.target.value }))}
+                placeholder="Your last name"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

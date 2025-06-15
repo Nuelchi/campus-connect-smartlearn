@@ -60,16 +60,8 @@ export default function ChatWindow({ messages, conversationId, conversations }: 
 
   const otherProfile = otherParticipant ? profiles[otherParticipant] : null;
 
-  const getEmailInitials = (email: string, count: number = 4): string => {
-    return email.split('@')[0].substring(0, count).toUpperCase();
-  };
-
   const getDisplayName = (profile: Profile | null, userId?: string) => {
     if (!profile) {
-      // If we don't have profile data, try to get email from user
-      if (userId === user?.id && user?.email) {
-        return getEmailInitials(user.email);
-      }
       return "Unknown User";
     }
 
@@ -83,15 +75,21 @@ export default function ChatWindow({ messages, conversationId, conversations }: 
       return `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
     }
 
-    // Third priority: email initials (we need to get the email from auth.users)
     return "User";
+  };
+
+  const getFullName = (profile: Profile | null) => {
+    if (!profile) return null;
+    
+    if (profile.first_name || profile.last_name) {
+      return `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
+    }
+    
+    return null;
   };
 
   const getInitials = (profile: Profile | null, userId?: string) => {
     if (!profile) {
-      if (userId === user?.id && user?.email) {
-        return getEmailInitials(user.email, 2);
-      }
       return "U";
     }
 
@@ -129,7 +127,12 @@ export default function ChatWindow({ messages, conversationId, conversations }: 
           </Avatar>
           <div>
             <h3 className="font-semibold">{getDisplayName(otherProfile, otherParticipant)}</h3>
-            <p className="text-sm text-muted-foreground">
+            {getFullName(otherProfile) && (
+              <p className="text-sm text-muted-foreground">
+                {getFullName(otherProfile)}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
               {otherProfile.department || "Student/Teacher"}
             </p>
           </div>
@@ -171,6 +174,14 @@ export default function ChatWindow({ messages, conversationId, conversations }: 
                       : "bg-muted"
                   )}
                 >
+                  {!isOwnMessage && senderProfile && (
+                    <p className="text-xs font-medium mb-1 opacity-70">
+                      {getDisplayName(senderProfile, message.sender_id)}
+                      {getFullName(senderProfile) && getDisplayName(senderProfile, message.sender_id) !== getFullName(senderProfile) && (
+                        <span className="ml-1">({getFullName(senderProfile)})</span>
+                      )}
+                    </p>
+                  )}
                   <p className="text-sm">{message.content}</p>
                   <p className={cn(
                     "text-xs mt-1",

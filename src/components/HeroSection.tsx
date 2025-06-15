@@ -54,7 +54,7 @@ const HeroSection = () => (
         <img
           src="/lovable-uploads/b0395cde-8a4e-4fbb-b669-f64f70ce6fbd.png"
           alt="Students collaborating with laptops in classroom"
-          className="rounded-xl shadow-2xl border border-primary/20 w-full max-w-lg h-auto object-cover transform hover:scale-105 transition-all duration-300 animate-fade-in"
+          className="rounded-lg shadow-2xl border-2 border-primary/10 w-full max-w-md animate-fade-in"
         />
       </div>
     </div>

@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import MessagingCenterV2 from "@/components/messaging/MessagingCenterV2";
+import MessagingCenter from "./MessagingCenter";
 import Gradebook from "./Gradebook";
 import TeacherCourseManagement from "./TeacherCourseManagement";
 import TeacherAnalyticsDashboard from "./TeacherAnalyticsDashboard";
@@ -20,7 +20,7 @@ export default function TeacherSectionRenderer({ section }: TeacherSectionRender
 
   switch (section) {
     case "messaging":
-      return <MessagingCenterV2 />;
+      return <MessagingCenter />;
     case "gradebook":
       return <Gradebook />;
     case "course-management":

@@ -1,225 +1,66 @@
 
-import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "./useAuth";
-import { toast } from "@/hooks/use-toast";
+import { ConversationService } from "@/services/conversationService";
+import { MessageService } from "@/services/messageService";
+import { useMessageSubscriptions } from "./useMessageSubscriptions";
+import { useCourseConversations } from "./useCourseConversations";
+import { Message, Conversation, MessageHookReturn } from "@/types/messaging";
 
-type Message = Tables<"messages">;
-type Conversation = Tables<"conversations">;
-
-export function useWebSocketMessages() {
+export function useWebSocketMessages(): MessageHookReturn {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const wsRef = useRef<WebSocket | null>(null);
+  const { startCourseConversation: handleCourseConversation } = useCourseConversations();
 
   // Fetch conversations for current user
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from("conversations")
-      .select("*")
-      .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
-      .order("last_message_at", { ascending: false });
-
-    if (error) {
-      console.error("Error fetching conversations:", error);
-    } else {
-      setConversations(data || []);
-      // Fetch unread counts for each conversation
-      fetchUnreadCounts(data || []);
-    }
-  };
-
-  // Fetch unread message counts
-  const fetchUnreadCounts = async (convs: Conversation[]) => {
-    if (!user) return;
-
-    const counts: Record<string, number> = {};
+    const conversationsData = await ConversationService.fetchConversations(user.id);
+    setConversations(conversationsData);
     
-    for (const conv of convs) {
-      const otherParticipant = conv.participant1_id === user.id 
-        ? conv.participant2_id 
-        : conv.participant1_id;
-
-      const { count, error } = await supabase
-        .from("messages")
-        .select("*", { count: "exact", head: true })
-        .eq("sender_id", otherParticipant)
-        .eq("recipient_id", user.id)
-        .eq("is_read", false);
-
-      if (!error && count !== null) {
-        counts[conv.id] = count;
-      }
-    }
-    
+    // Fetch unread counts for each conversation
+    const counts = await ConversationService.fetchUnreadCounts(conversationsData, user.id);
     setUnreadCounts(counts);
-  };
+  }, [user]);
 
   // Fetch messages for a specific conversation
-  const fetchMessages = async (conversationId: string) => {
+  const fetchMessages = useCallback(async (conversationId: string) => {
     if (!user) return;
 
-    const conversation = conversations.find(c => c.id === conversationId);
-    if (!conversation) return;
-
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*")
-      .or(
-        `sender_id.eq.${conversation.participant1_id}.and.recipient_id.eq.${conversation.participant2_id},sender_id.eq.${conversation.participant2_id}.and.recipient_id.eq.${conversation.participant1_id}`
-      )
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      console.error("Error fetching messages:", error);
-    } else {
-      setMessages(data || []);
-    }
-  };
-
-  // Set up realtime subscriptions using Supabase channel
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel('messaging')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages'
-      }, (payload) => {
-        const newMessage = payload.new as Message;
-        
-        // Check if message is for current user
-        if (newMessage.recipient_id === user.id) {
-          toast({
-            title: "New message",
-            description: "You have received a new message",
-          });
-          
-          // Refresh conversations and unread counts
-          fetchConversations();
-          
-          // If message is for active conversation, add to messages
-          if (activeConversationId) {
-            fetchMessages(activeConversationId);
-          }
-        }
-      })
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'conversations'
-      }, () => {
-        fetchConversations();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, activeConversationId]);
+    const messagesData = await MessageService.fetchMessages(conversationId, conversations);
+    setMessages(messagesData);
+  }, [user, conversations]);
 
   // Send a new message
-  const sendMessage = async (recipientId: string, content: string) => {
+  const sendMessage = useCallback(async (recipientId: string, content: string) => {
     if (!user) return;
 
     try {
-      // Get or create conversation
-      const { data: conversationId, error: convError } = await supabase
-        .rpc("get_or_create_conversation", {
-          user1_id: user.id,
-          user2_id: recipientId
-        });
-
-      if (convError) throw convError;
-
-      // Insert message
-      const { error: messageError } = await supabase
-        .from("messages")
-        .insert({
-          sender_id: user.id,
-          recipient_id: recipientId,
-          content
-        });
-
-      if (messageError) throw messageError;
-
-      // Update conversation's last_message_at
-      await supabase
-        .from("conversations")
-        .update({ last_message_at: new Date().toISOString() })
-        .eq("id", conversationId);
-
-      // Refresh conversations
-      fetchConversations();
-      
-      // If this is the active conversation, refresh messages
-      if (activeConversationId === conversationId) {
-        fetchMessages(conversationId);
-      }
-
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
-  };
-
-  // Start a conversation with a course teacher
-  const startCourseConversation = async (courseId: string) => {
-    if (!user) return;
-
-    try {
-      // Get course instructor
-      const { data: course, error: courseError } = await supabase
-        .from("courses")
-        .select("instructor_id, title")
-        .eq("id", courseId)
-        .single();
-
-      if (courseError) throw courseError;
-
-      const { data: conversationId, error } = await supabase
-        .rpc("get_or_create_conversation", {
-          user1_id: user.id,
-          user2_id: course.instructor_id
-        });
-
-      if (error) throw error;
-
-      // Send initial message
-      await sendMessage(course.instructor_id, `Hi! I'm interested in your course "${course.title}". Could you please provide more information?`);
+      await MessageService.sendMessage(user.id, recipientId, content);
 
       // Refresh conversations
       await fetchConversations();
       
-      // Set as active conversation
-      setActiveConversationId(conversationId);
-      
-      return conversationId;
+      // If this is the active conversation, refresh messages
+      if (activeConversationId) {
+        await fetchMessages(activeConversationId);
+      }
     } catch (error) {
-      console.error("Error starting course conversation:", error);
+      console.error("Error sending message:", error);
     }
-  };
+  }, [user, activeConversationId, fetchConversations, fetchMessages]);
 
   // Start a new conversation
-  const startConversation = async (recipientId: string) => {
+  const startConversation = useCallback(async (recipientId: string) => {
     if (!user) return;
 
     try {
-      const { data: conversationId, error } = await supabase
-        .rpc("get_or_create_conversation", {
-          user1_id: user.id,
-          user2_id: recipientId
-        });
-
-      if (error) throw error;
+      const conversationId = await ConversationService.getOrCreateConversation(user.id, recipientId);
 
       // Refresh conversations
       await fetchConversations();
@@ -231,32 +72,52 @@ export function useWebSocketMessages() {
     } catch (error) {
       console.error("Error starting conversation:", error);
     }
-  };
+  }, [user, fetchConversations]);
 
-  // Mark messages as read
-  const markAsRead = async (conversationId: string) => {
+  // Start a conversation with a course teacher
+  const startCourseConversation = useCallback(async (courseId: string) => {
     if (!user) return;
 
-    const conversation = conversations.find(c => c.id === conversationId);
-    if (!conversation) return;
+    try {
+      const conversationId = await handleCourseConversation(courseId, user.id);
 
-    const otherParticipant = conversation.participant1_id === user.id 
-      ? conversation.participant2_id 
-      : conversation.participant1_id;
+      // Refresh conversations
+      await fetchConversations();
+      
+      // Set as active conversation
+      setActiveConversationId(conversationId);
+      
+      return conversationId;
+    } catch (error) {
+      console.error("Error starting course conversation:", error);
+    }
+  }, [user, handleCourseConversation, fetchConversations]);
 
-    await supabase
-      .from("messages")
-      .update({ is_read: true })
-      .eq("sender_id", otherParticipant)
-      .eq("recipient_id", user.id)
-      .eq("is_read", false);
+  // Mark messages as read
+  const markAsRead = useCallback(async (conversationId: string) => {
+    if (!user) return;
+
+    await ConversationService.markMessagesAsRead(conversationId, user.id, conversations);
 
     // Update unread counts
     setUnreadCounts(prev => ({
       ...prev,
       [conversationId]: 0
     }));
-  };
+  }, [user, conversations]);
+
+  // Set up realtime subscriptions
+  useMessageSubscriptions({
+    userId: user?.id || null,
+    activeConversationId,
+    onNewMessage: fetchConversations,
+    onConversationUpdate: fetchConversations,
+    onMessageUpdate: () => {
+      if (activeConversationId) {
+        fetchMessages(activeConversationId);
+      }
+    }
+  });
 
   // Initial load
   useEffect(() => {
@@ -264,7 +125,7 @@ export function useWebSocketMessages() {
       fetchConversations();
       setLoading(false);
     }
-  }, [user]);
+  }, [user, fetchConversations]);
 
   // Fetch messages when active conversation changes
   useEffect(() => {
@@ -272,7 +133,7 @@ export function useWebSocketMessages() {
       fetchMessages(activeConversationId);
       markAsRead(activeConversationId);
     }
-  }, [activeConversationId, conversations]);
+  }, [activeConversationId, fetchMessages, markAsRead]);
 
   return {
     conversations,

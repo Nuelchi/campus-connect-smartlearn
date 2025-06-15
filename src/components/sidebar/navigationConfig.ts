@@ -109,6 +109,11 @@ export const getMainNavItems = (role: string | null): NavigationItem[] => {
         icon: Upload,
       },
       {
+        title: "Messages",
+        url: "/dashboard?section=messaging",
+        icon: MessageSquare,
+      },
+      {
         title: "Grades",
         url: "/dashboard?section=grades",
         icon: GraduationCap,
@@ -143,6 +148,11 @@ export const getMainNavItems = (role: string | null): NavigationItem[] => {
         title: "Teacher Approval",
         url: "/dashboard?section=teacher-approval",
         icon: ClipboardList,
+      },
+      {
+        title: "Messages",
+        url: "/dashboard?section=messaging",
+        icon: MessageSquare,
       },
       {
         title: "Analytics",

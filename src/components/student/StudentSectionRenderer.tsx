@@ -7,6 +7,7 @@ import AssignmentManagement from "@/components/dashboard/AssignmentManagement";
 import CertificateCenter from "@/components/dashboard/CertificateCenter";
 import StudentGrades from "@/components/student/StudentGrades";
 import AcademicCalendar from "@/components/student/AcademicCalendar";
+import MessagingCenter from "@/components/messaging/MessagingCenter";
 import { useAuth } from "@/hooks/useAuth";
 import { useCourses } from "@/hooks/useCourses";
 import CourseCard from "@/components/CourseCard";
@@ -87,6 +88,8 @@ export default function StudentSectionRenderer({ section }: StudentSectionRender
           <SubmissionsList />
         </div>
       );
+    case "messaging":
+      return <MessagingCenter />;
     case "grades":
       return <StudentGrades />;
     case "certificates":

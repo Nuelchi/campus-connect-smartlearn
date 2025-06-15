@@ -7,7 +7,7 @@ import { Search, Send, Users, Mail } from "lucide-react";
 import { useWebSocketMessages } from "@/hooks/useWebSocketMessages";
 import { useAuth } from "@/hooks/useAuth";
 import { useSearchParams } from "react-router-dom";
-import ConversationList from "./ConversationList";
+import EnhancedConversationList from "./EnhancedConversationList";
 import ChatWindow from "./ChatWindow";
 import UserSearchDialog from "./UserSearchDialog";
 import UserSearchByEmail from "./UserSearchByEmail";
@@ -103,7 +103,7 @@ export default function MessagingCenterV2() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Messages</h1>
             <p className="text-muted-foreground mt-2">
-              Connect with your teachers and students in real-time
+              Chat with your students organized by course
             </p>
           </div>
           {totalUnreadCount > 0 && (
@@ -123,19 +123,19 @@ export default function MessagingCenterV2() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
-        {/* Conversation List */}
+        {/* Enhanced Conversation List with Course Grouping */}
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Search className="h-5 w-5" />
-              Conversations
+              Student Conversations
               {totalUnreadCount > 0 && (
                 <UnreadIndicator count={totalUnreadCount} />
               )}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <ConversationList
+            <EnhancedConversationList
               conversations={conversations}
               activeConversationId={activeConversationId}
               onSelectConversation={setActiveConversationId}

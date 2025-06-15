@@ -31,7 +31,7 @@ import { Tables } from "@/integrations/supabase/types";
 
 type AssignmentSubmission = Tables<"assignment_submissions"> & {
   assignment: Tables<"assignments">;
-  student_profile: Tables<"profiles">;
+  student_profile?: Tables<"profiles"> | null;
 };
 
 export default function AssignmentSubmissions() {
@@ -55,39 +55,54 @@ export default function AssignmentSubmissions() {
     setLoading(true);
     
     try {
-      // Get submissions for teacher's courses with proper joins
-      const { data, error } = await supabase
+      // First get the teacher's courses
+      const { data: courses } = await supabase
+        .from("courses")
+        .select("id")
+        .eq("instructor_id", user.id);
+      
+      if (!courses || courses.length === 0) {
+        setSubmissions([]);
+        setLoading(false);
+        return;
+      }
+
+      const courseIds = courses.map(c => c.id);
+
+      // Get submissions for teacher's courses
+      const { data: submissionData, error: submissionError } = await supabase
         .from("assignment_submissions")
         .select(`
           *,
-          assignment:assignments(*),
-          student_profile:profiles!assignment_submissions_student_id_fkey(*)
+          assignment:assignments(*)
         `)
-        .eq("assignment.course.instructor_id", user.id)
+        .in("assignment.course_id", courseIds)
         .order("submitted_at", { ascending: false });
       
-      if (error) {
-        console.error("Error fetching submissions:", error);
+      if (submissionError) {
+        console.error("Error fetching submissions:", submissionError);
         toast({
           title: "Error",
           description: "Failed to load submissions. Please try again.",
           variant: "destructive",
         });
-      } else {
-        // Filter submissions based on teacher's courses
-        const { data: courses } = await supabase
-          .from("courses")
-          .select("id")
-          .eq("instructor_id", user.id);
-        
-        if (courses) {
-          const courseIds = courses.map(c => c.id);
-          const teacherSubmissions = data?.filter(submission => 
-            courseIds.includes(submission.assignment.course_id)
-          ) || [];
-          setSubmissions(teacherSubmissions);
-        }
+        return;
       }
+
+      // Get student profiles separately
+      const studentIds = submissionData?.map(s => s.student_id) || [];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", studentIds);
+
+      // Combine submissions with profiles
+      const submissionsWithProfiles = submissionData?.map(submission => ({
+        ...submission,
+        student_profile: profiles?.find(p => p.id === submission.student_id) || null
+      })) || [];
+
+      setSubmissions(submissionsWithProfiles);
     } catch (error) {
       console.error("Error fetching submissions:", error);
       toast({

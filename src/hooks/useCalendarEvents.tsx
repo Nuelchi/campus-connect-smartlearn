@@ -3,12 +3,13 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { isSameDay, startOfDay, endOfDay } from "date-fns";
 
 interface CalendarEvent {
   id: string;
   title: string;
   description: string | null;
-  event_type: string; // Changed from strict union to string to match database
+  event_type: string;
   start_date: string;
   end_date: string | null;
   is_all_day: boolean | null;
@@ -76,26 +77,40 @@ export function useCalendarEvents() {
 
   const getEventsByDateRange = useCallback((startDate: Date, endDate: Date) => {
     console.log('Getting events for date range:', startDate, 'to', endDate);
+    
+    // Convert dates to UTC for proper comparison
+    const startUTC = startOfDay(startDate).toISOString();
+    const endUTC = endOfDay(endDate).toISOString();
+    
+    console.log('UTC range:', startUTC, 'to', endUTC);
+    
     const filteredEvents = events.filter(event => {
-      const eventStart = new Date(event.start_date);
-      const eventEnd = event.end_date ? new Date(event.end_date) : eventStart;
+      const eventStart = event.start_date;
+      const eventEnd = event.end_date || event.start_date;
       
-      const isInRange = (eventStart >= startDate && eventStart <= endDate) ||
-             (eventEnd >= startDate && eventEnd <= endDate) ||
-             (eventStart <= startDate && eventEnd >= endDate);
+      const isInRange = (eventStart >= startUTC && eventStart <= endUTC) ||
+                       (eventEnd >= startUTC && eventEnd <= endUTC) ||
+                       (eventStart <= startUTC && eventEnd >= endUTC);
       
-      console.log(`Event "${event.title}" (${eventStart.toDateString()}) in range:`, isInRange);
+      console.log(`Event "${event.title}" (${eventStart}) in range:`, isInRange);
       return isInRange;
     });
+    
     console.log('Filtered events for date range:', filteredEvents);
     return filteredEvents;
   }, [events]);
 
   const getUpcomingEvents = useCallback((limit: number = 5) => {
-    const now = new Date();
+    const now = new Date().toISOString();
     return events
-      .filter(event => new Date(event.start_date) >= now)
+      .filter(event => event.start_date >= now)
       .slice(0, limit);
+  }, [events]);
+
+  const getEventsByDate = useCallback((date: Date) => {
+    return events.filter(event => 
+      isSameDay(new Date(event.start_date), date)
+    );
   }, [events]);
 
   useEffect(() => {
@@ -129,6 +144,7 @@ export function useCalendarEvents() {
     fetchEvents,
     createReminder,
     getEventsByDateRange,
-    getUpcomingEvents
+    getUpcomingEvents,
+    getEventsByDate
   };
 }

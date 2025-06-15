@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -131,7 +132,7 @@ export default function CourseDetail() {
   const renderMaterialViewer = (material: CourseMaterial) => {
     const embedStyle = "w-full h-full border-0 rounded-lg";
     
-    if (material.file_url?.endsWith('.pdf')) {
+    if (material.file_url && (material.file_url.endsWith('.pdf') || material.content_type === 'PDF')) {
       return (
         <div className="relative w-full h-[600px] bg-gray-100 rounded-lg overflow-hidden">
           <div className="absolute top-3 right-3 z-10 flex gap-2">
@@ -152,11 +153,11 @@ export default function CourseDetail() {
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <embed 
+          <iframe 
             src={material.file_url}
-            type="application/pdf"
             className={embedStyle}
             style={{ height: '600px' }}
+            title="PDF Viewer"
           />
         </div>
       );
@@ -282,10 +283,10 @@ export default function CourseDetail() {
               Exit Fullscreen
             </Button>
           </div>
-          <embed 
+          <iframe 
             src={selectedMaterial.file_url || ''}
-            type="application/pdf"
             className="w-full h-full"
+            title="PDF Viewer"
           />
         </div>
       )}

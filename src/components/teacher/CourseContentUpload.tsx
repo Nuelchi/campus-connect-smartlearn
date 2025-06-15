@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, FileVideo, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CourseContentUploadProps {
   courseId: string;
@@ -23,6 +24,7 @@ export default function CourseContentUpload({ courseId, onContentUploaded }: Cou
     externalUrl: "",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { user } = useAuth();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -30,12 +32,38 @@ export default function CourseContentUpload({ courseId, onContentUploaded }: Cou
       setSelectedFile(file);
       // Auto-detect content type based on file extension
       const extension = file.name.split('.').pop()?.toLowerCase();
-      if (['mp4', 'avi', 'mov', 'wmv'].includes(extension || '')) {
+      if (['mp4', 'avi', 'mov', 'wmv', 'webm'].includes(extension || '')) {
         setFormData(prev => ({ ...prev, contentType: 'video' }));
-      } else if (['pdf', 'doc', 'docx'].includes(extension || '')) {
-        setFormData(prev => ({ ...prev, contentType: 'pdf' }));
+      } else if (['pdf'].includes(extension || '')) {
+        setFormData(prev => ({ ...prev, contentType: 'PDF' }));
+      } else if (['doc', 'docx'].includes(extension || '')) {
+        setFormData(prev => ({ ...prev, contentType: 'document' }));
       }
     }
+  };
+
+  const uploadFileToStorage = async (file: File): Promise<string | null> => {
+    if (!user) return null;
+
+    // Create a unique file path: userId/courseId/filename
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${courseId}/${Date.now()}.${fileExt}`;
+
+    const { data, error } = await supabase.storage
+      .from('course-materials')
+      .upload(fileName, file);
+
+    if (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+
+    // Get the public URL
+    const { data: urlData } = supabase.storage
+      .from('course-materials')
+      .getPublicUrl(fileName);
+
+    return urlData.publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,18 +74,18 @@ export default function CourseContentUpload({ courseId, onContentUploaded }: Cou
       let fileUrl = formData.externalUrl;
       let fileSize = null;
 
-      // If a file is selected, we would normally upload it to Supabase Storage
-      // For now, we'll just use the external URL field
+      // Upload file to Supabase Storage if selected
       if (selectedFile) {
-        // In a real implementation, you would upload to Supabase Storage here
-        // For demo purposes, we'll create a placeholder URL
-        fileUrl = `https://example.com/content/${selectedFile.name}`;
+        fileUrl = await uploadFileToStorage(selectedFile);
         fileSize = selectedFile.size;
         
-        toast({
-          title: "Note",
-          description: "File upload to storage not implemented in demo. Using placeholder URL.",
-        });
+        if (!fileUrl) {
+          throw new Error('Failed to upload file');
+        }
+      }
+
+      if (!fileUrl && !formData.externalUrl) {
+        throw new Error('Please either upload a file or provide an external URL');
       }
 
       const { error } = await supabase
@@ -67,7 +95,7 @@ export default function CourseContentUpload({ courseId, onContentUploaded }: Cou
           title: formData.title,
           content_type: formData.contentType,
           file_url: fileUrl,
-          external_url: formData.externalUrl,
+          external_url: formData.externalUrl || null,
           file_size: fileSize,
         });
 
@@ -131,10 +159,16 @@ export default function CourseContentUpload({ courseId, onContentUploaded }: Cou
                     Video
                   </div>
                 </SelectItem>
-                <SelectItem value="pdf">
+                <SelectItem value="PDF">
                   <div className="flex items-center">
                     <FileText className="mr-2 h-4 w-4" />
                     PDF Document
+                  </div>
+                </SelectItem>
+                <SelectItem value="document">
+                  <div className="flex items-center">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Document
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -147,7 +181,7 @@ export default function CourseContentUpload({ courseId, onContentUploaded }: Cou
               id="file"
               type="file"
               onChange={handleFileChange}
-              accept={formData.contentType === 'video' ? 'video/*' : 'application/pdf,.pdf,.doc,.docx'}
+              accept={formData.contentType === 'video' ? 'video/*' : formData.contentType === 'PDF' ? '.pdf' : '.pdf,.doc,.docx'}
             />
             {selectedFile && (
               <p className="text-sm text-muted-foreground">

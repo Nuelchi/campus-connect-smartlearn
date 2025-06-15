@@ -74,7 +74,7 @@ export default function CourseCard({
   };
 
   const pdfMaterials = materials.filter(material => 
-    material.file_url?.endsWith('.pdf')
+    material.file_url && (material.file_url.endsWith('.pdf') || material.content_type === 'PDF')
   );
 
   return (
@@ -104,13 +104,14 @@ export default function CourseCard({
           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
             {pdfMaterials.length > 0 ? (
               <div className="w-full h-full p-4 flex flex-col">
-                <div className="flex-1 bg-white rounded-lg overflow-hidden mb-4">
-                  <embed 
-                    src={pdfMaterials[0].file_url}
-                    type="application/pdf"
-                    className="w-full h-full"
-                    onClick={() => handlePdfClick(pdfMaterials[0].file_url!)}
+                <div className="flex-1 bg-white rounded-lg overflow-hidden mb-4 relative">
+                  {/* PDF Preview using iframe */}
+                  <iframe 
+                    src={`${pdfMaterials[0].file_url}#toolbar=0&navpanes=0&scrollbar=0`}
+                    className="w-full h-full border-0"
+                    style={{ pointerEvents: 'none' }}
                   />
+                  <div className="absolute inset-0 bg-transparent cursor-pointer" onClick={() => handlePdfClick(pdfMaterials[0].file_url!)} />
                 </div>
                 <div className="flex gap-2">
                   <Button 
@@ -238,10 +239,10 @@ export default function CourseCard({
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <embed 
+            <iframe 
               src={selectedPdf}
-              type="application/pdf"
               className="w-full h-full"
+              title="PDF Viewer"
             />
           </div>
         </div>

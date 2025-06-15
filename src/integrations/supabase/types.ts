@@ -106,6 +106,57 @@ export type Database = {
           },
         ]
       }
+      calendar_events: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          event_type: string
+          id: string
+          is_active: boolean | null
+          is_all_day: boolean | null
+          is_global: boolean | null
+          location: string | null
+          start_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          event_type: string
+          id?: string
+          is_active?: boolean | null
+          is_all_day?: boolean | null
+          is_global?: boolean | null
+          location?: string | null
+          start_date: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          event_type?: string
+          id?: string
+          is_active?: boolean | null
+          is_all_day?: boolean | null
+          is_global?: boolean | null
+          location?: string | null
+          start_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       course_discussions: {
         Row: {
           author_id: string
@@ -323,6 +374,44 @@ export type Database = {
           },
         ]
       }
+      event_reminders: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          is_sent: boolean | null
+          remind_at: string
+          reminder_type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          is_sent?: boolean | null
+          remind_at: string
+          reminder_type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          is_sent?: boolean | null
+          remind_at?: string
+          reminder_type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_reminders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -469,6 +558,10 @@ export type Database = {
       }
     }
     Functions: {
+      create_event_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_recent_activity: {
         Args: { limit_count?: number }
         Returns: {

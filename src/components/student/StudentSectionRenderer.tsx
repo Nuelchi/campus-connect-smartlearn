@@ -5,6 +5,7 @@ import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import AssignmentManagement from "@/components/dashboard/AssignmentManagement";
 import CertificateCenter from "@/components/dashboard/CertificateCenter";
 import StudentGrades from "@/components/student/StudentGrades";
+import AcademicCalendar from "@/components/student/AcademicCalendar";
 import { useAuth } from "@/hooks/useAuth";
 import { useCourses } from "@/hooks/useCourses";
 import CourseCard from "@/components/CourseCard";
@@ -97,16 +98,7 @@ export default function StudentSectionRenderer({ section }: StudentSectionRender
         </Card>
       );
     case "calendar":
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle>Academic Calendar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Calendar functionality coming soon...</p>
-          </CardContent>
-        </Card>
-      );
+      return <AcademicCalendar />;
     case "notifications":
       return <NotificationCenter />;
     case "help":

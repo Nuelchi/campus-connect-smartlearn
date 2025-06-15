@@ -54,14 +54,8 @@ export default function AssignmentSubmissions() {
     
     setLoading(true);
     
-    // Get submissions for teacher's courses
-    const { data: courses } = await supabase
-      .from("courses")
-      .select("id")
-      .eq("instructor_id", user.id);
-    
-    if (courses && courses.length > 0) {
-      const courseIds = courses.map(c => c.id);
+    try {
+      // Get submissions for teacher's courses with proper joins
       const { data, error } = await supabase
         .from("assignment_submissions")
         .select(`
@@ -69,15 +63,41 @@ export default function AssignmentSubmissions() {
           assignment:assignments(*),
           student_profile:profiles!assignment_submissions_student_id_fkey(*)
         `)
-        .in("assignment.course_id", courseIds)
+        .eq("assignment.course.instructor_id", user.id)
         .order("submitted_at", { ascending: false });
       
-      if (!error) {
-        setSubmissions(data || []);
+      if (error) {
+        console.error("Error fetching submissions:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load submissions. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        // Filter submissions based on teacher's courses
+        const { data: courses } = await supabase
+          .from("courses")
+          .select("id")
+          .eq("instructor_id", user.id);
+        
+        if (courses) {
+          const courseIds = courses.map(c => c.id);
+          const teacherSubmissions = data?.filter(submission => 
+            courseIds.includes(submission.assignment.course_id)
+          ) || [];
+          setSubmissions(teacherSubmissions);
+        }
       }
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load submissions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleGrade = async () => {
@@ -184,10 +204,10 @@ export default function AssignmentSubmissions() {
                       <User className="w-4 h-4 text-muted-foreground" />
                       <div>
                         <p className="font-medium">
-                          {submission.student_profile?.first_name} {submission.student_profile?.last_name}
+                          {submission.student_profile?.first_name || "Unknown"} {submission.student_profile?.last_name || "Student"}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {submission.student_profile?.username}
+                          {submission.student_profile?.username || "No username"}
                         </p>
                       </div>
                     </div>
@@ -274,7 +294,9 @@ export default function AssignmentSubmissions() {
                           </DialogHeader>
                           <div className="space-y-4">
                             <div>
-                              <h4 className="font-medium">Student: {submission.student_profile?.first_name} {submission.student_profile?.last_name}</h4>
+                              <h4 className="font-medium">
+                                Student: {submission.student_profile?.first_name || "Unknown"} {submission.student_profile?.last_name || "Student"}
+                              </h4>
                               <p className="text-sm text-muted-foreground">Assignment: {submission.assignment.title}</p>
                             </div>
                             

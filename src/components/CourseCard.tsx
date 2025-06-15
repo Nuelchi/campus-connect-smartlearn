@@ -1,9 +1,8 @@
-
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Users, Calendar, BookOpen, Play, Star, X, Maximize } from "lucide-react";
+import { Users, Calendar, BookOpen, Play, Star, X, Maximize, ExternalLink } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,8 +53,8 @@ export default function CourseCard({
   };
 
   const handlePdfClick = (pdfUrl: string) => {
-    setSelectedPdf(pdfUrl);
-    setShowPdfPopup(true);
+    // Open PDF in a new tab instead of iframe to avoid Chrome blocking
+    window.open(pdfUrl, '_blank');
   };
 
   const getCategoryColor = (category: string | null) => {
@@ -104,14 +103,13 @@ export default function CourseCard({
           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
             {pdfMaterials.length > 0 ? (
               <div className="w-full h-full p-4 flex flex-col">
-                <div className="flex-1 bg-white rounded-lg overflow-hidden mb-4 relative">
-                  {/* PDF Preview using iframe */}
-                  <iframe 
-                    src={`${pdfMaterials[0].file_url}#toolbar=0&navpanes=0&scrollbar=0`}
-                    className="w-full h-full border-0"
-                    style={{ pointerEvents: 'none' }}
-                  />
-                  <div className="absolute inset-0 bg-transparent cursor-pointer" onClick={() => handlePdfClick(pdfMaterials[0].file_url!)} />
+                <div className="flex-1 bg-white rounded-lg overflow-hidden mb-4 relative flex items-center justify-center">
+                  {/* PDF Preview placeholder */}
+                  <div className="text-center">
+                    <BookOpen className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-600">PDF Preview</p>
+                    <p className="text-xs text-gray-500">{pdfMaterials[0].title}</p>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button 
@@ -119,8 +117,8 @@ export default function CourseCard({
                     size="sm" 
                     className="bg-white/90 text-black hover:bg-white flex-1"
                   >
-                    <Maximize className="mr-2 h-4 w-4" />
-                    View PDF
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Open PDF
                   </Button>
                   <Button 
                     onClick={handleViewCourse}
@@ -224,29 +222,6 @@ export default function CourseCard({
           )}
         </CardFooter>
       </Card>
-
-      {/* PDF Popup Modal */}
-      {showPdfPopup && selectedPdf && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="relative w-full max-w-6xl h-full max-h-[90vh] bg-white rounded-lg overflow-hidden">
-            <div className="absolute top-4 right-4 z-10">
-              <Button
-                onClick={() => setShowPdfPopup(false)}
-                variant="secondary"
-                size="sm"
-                className="bg-black/70 text-white hover:bg-black/80"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <iframe 
-              src={selectedPdf}
-              className="w-full h-full"
-              title="PDF Viewer"
-            />
-          </div>
-        </div>
-      )}
     </>
   );
 }

@@ -15,7 +15,6 @@ import { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 
 type Profile = Tables<"profiles">;
-type UserRole = Tables<"user_roles">;
 
 interface UserSearchByEmailProps {
   open: boolean;
@@ -44,85 +43,39 @@ export default function UserSearchByEmail({
     setFoundUser(null);
     
     try {
-      // First, get user from auth.users by email
-      const { data: authData, error: authError } = await supabase
+      // Search by first/last name containing email-like pattern as fallback
+      const emailUsername = email.split('@')[0];
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user.id)
-        .single();
+        .or(`first_name.ilike.%${emailUsername}%,last_name.ilike.%${emailUsername}%`)
+        .neq("id", user.id)
+        .limit(1);
 
-      if (authError) throw authError;
+      if (profilesError) throw profilesError;
 
-      // Search in profiles by checking auth.users for email
-      const { data: authUsers, error: authUsersError } = await supabase.auth.admin.listUsers();
-      
-      if (authUsersError) {
-        // Fallback: search by first/last name containing email-like pattern
-        const emailUsername = email.split('@')[0];
-        const { data: profiles, error: profilesError } = await supabase
-          .from("profiles")
+      if (profiles && profiles.length > 0) {
+        const profile = profiles[0];
+        
+        // Get role for this user
+        const { data: userRole, error: roleError } = await supabase
+          .from("user_roles")
           .select("*")
-          .or(`first_name.ilike.%${emailUsername}%,last_name.ilike.%${emailUsername}%`)
-          .neq("id", user.id)
-          .limit(1);
+          .eq("user_id", profile.id)
+          .single();
 
-        if (profilesError) throw profilesError;
-
-        if (profiles && profiles.length > 0) {
-          const profile = profiles[0];
-          
-          // Get role for this user
-          const { data: userRole, error: roleError } = await supabase
-            .from("user_roles")
-            .select("*")
-            .eq("user_id", profile.id)
-            .single();
-
-          if (!roleError && userRole) {
-            setFoundUser({
-              ...profile,
-              role: userRole.role,
-              email: "Email not available"
-            });
-          }
+        if (!roleError && userRole) {
+          setFoundUser({
+            ...profile,
+            role: userRole.role,
+            email: email // Use the searched email as display
+          });
         } else {
           setNotFound(true);
         }
-        return;
-      }
-
-      // Find user by email in auth.users
-      const authUser = authUsers.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-      
-      if (!authUser) {
+      } else {
         setNotFound(true);
-        setLoading(false);
-        return;
       }
-
-      // Get profile for this user
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", authUser.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Get role for this user
-      const { data: userRole, error: roleError } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", authUser.id)
-        .single();
-
-      if (roleError) throw roleError;
-
-      setFoundUser({
-        ...profile,
-        role: userRole.role,
-        email: authUser.email || email
-      });
 
     } catch (error) {
       console.error("Error searching user:", error);

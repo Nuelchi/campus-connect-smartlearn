@@ -84,43 +84,18 @@ export function useWebSocketMessages() {
     }
   };
 
-  // Set up WebSocket connection
+  // Set up realtime subscriptions using Supabase channel
   useEffect(() => {
     if (!user) return;
 
-    // Create WebSocket connection to Supabase realtime
-    const wsUrl = `wss://${supabase.supabaseUrl.replace('https://', '')}/realtime/v1/websocket?apikey=${supabase.supabaseKey}&vsn=1.0.0`;
-    
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      console.log("WebSocket connected");
-      
-      // Join messages channel
-      const joinMessage = {
-        topic: "realtime:public:messages",
-        event: "phx_join",
-        payload: {},
-        ref: Date.now().toString()
-      };
-      ws.send(JSON.stringify(joinMessage));
-
-      // Join conversations channel
-      const joinConvMessage = {
-        topic: "realtime:public:conversations", 
-        event: "phx_join",
-        payload: {},
-        ref: Date.now().toString()
-      };
-      ws.send(JSON.stringify(joinConvMessage));
-    };
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      if (data.event === "INSERT" && data.table === "messages") {
-        const newMessage = data.record as Message;
+    const channel = supabase
+      .channel('messaging')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages'
+      }, (payload) => {
+        const newMessage = payload.new as Message;
         
         // Check if message is for current user
         if (newMessage.recipient_id === user.id) {
@@ -137,25 +112,18 @@ export function useWebSocketMessages() {
             fetchMessages(activeConversationId);
           }
         }
-      }
-      
-      if (data.event === "UPDATE" && data.table === "conversations") {
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'conversations'
+      }, () => {
         fetchConversations();
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
-
-    ws.onclose = () => {
-      console.log("WebSocket disconnected");
-    };
+      })
+      .subscribe();
 
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      supabase.removeChannel(channel);
     };
   }, [user, activeConversationId]);
 

@@ -418,6 +418,55 @@ export type Database = {
         }
         Relationships: []
       }
+      student_academic_stats: {
+        Row: {
+          a_grades: number | null
+          b_grades: number | null
+          below_c_grades: number | null
+          c_grades: number | null
+          cumulative_gpa: number | null
+          graded_assignments: number | null
+          highest_grade: number | null
+          lowest_grade: number | null
+          overall_average: number | null
+          pending_assignments: number | null
+          student_id: string | null
+          total_assignments: number | null
+        }
+        Relationships: []
+      }
+      student_grade_summary: {
+        Row: {
+          assignment_id: string | null
+          assignment_title: string | null
+          course_category: string | null
+          course_id: string | null
+          course_title: string | null
+          feedback: string | null
+          gpa_points: number | null
+          grade: number | null
+          graded_at: string | null
+          letter_grade: string | null
+          student_id: string | null
+          submitted_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignment_submissions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_recent_activity: {

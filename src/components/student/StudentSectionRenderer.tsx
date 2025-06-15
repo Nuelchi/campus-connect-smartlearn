@@ -4,6 +4,7 @@ import SettingsPanel from "@/components/dashboard/SettingsPanel";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import AssignmentManagement from "@/components/dashboard/AssignmentManagement";
 import CertificateCenter from "@/components/dashboard/CertificateCenter";
+import StudentGrades from "@/components/student/StudentGrades";
 import { useAuth } from "@/hooks/useAuth";
 import { useCourses } from "@/hooks/useCourses";
 import CourseCard from "@/components/CourseCard";
@@ -81,16 +82,7 @@ export default function StudentSectionRenderer({ section }: StudentSectionRender
         </Card>
       );
     case "grades":
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle>My Grades</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Grades view functionality coming soon...</p>
-          </CardContent>
-        </Card>
-      );
+      return <StudentGrades />;
     case "certificates":
       return <CertificateCenter />;
     case "progress":

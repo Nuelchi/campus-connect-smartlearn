@@ -51,17 +51,28 @@ export default function CertificateManagement() {
       // For each course, get enrolled students and check if they have certificates
       const coursesWithStudents = await Promise.all(
         (coursesData || []).map(async (course) => {
-          // Get enrolled students with their profile information
+          // Get enrolled students
           const { data: enrollments, error: enrollmentsError } = await supabase
             .from("enrollments")
-            .select(`
-              student_id,
-              profiles!enrollments_student_id_fkey(id, first_name, last_name)
-            `)
+            .select("student_id")
             .eq("course_id", course.id)
             .eq("status", "active");
 
           if (enrollmentsError) throw enrollmentsError;
+
+          // Get profile information for these students
+          const studentIds = (enrollments || []).map(e => e.student_id);
+          
+          let profiles: any[] = [];
+          if (studentIds.length > 0) {
+            const { data: profilesData, error: profilesError } = await supabase
+              .from("profiles")
+              .select("id, first_name, last_name")
+              .in("id", studentIds);
+
+            if (profilesError) throw profilesError;
+            profiles = profilesData || [];
+          }
 
           // Get existing certificates for this course
           const { data: certificates, error: certificatesError } = await supabase
@@ -74,11 +85,11 @@ export default function CertificateManagement() {
 
           const certificateStudentIds = new Set(certificates?.map(cert => cert.student_id) || []);
 
-          const students: Student[] = (enrollments || []).map(enrollment => ({
-            id: enrollment.profiles.id,
-            first_name: enrollment.profiles.first_name,
-            last_name: enrollment.profiles.last_name,
-            has_certificate: certificateStudentIds.has(enrollment.profiles.id),
+          const students: Student[] = profiles.map(profile => ({
+            id: profile.id,
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            has_certificate: certificateStudentIds.has(profile.id),
           }));
 
           return {

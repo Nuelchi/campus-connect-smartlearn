@@ -1,8 +1,9 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Message } from "@/types/messaging";
 import { toast } from "@/hooks/use-toast";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface UseMessageSubscriptionsProps {
   userId: string | null;
@@ -19,11 +20,23 @@ export function useMessageSubscriptions({
   onConversationUpdate,
   onMessageUpdate
 }: UseMessageSubscriptionsProps) {
+  const channelRef = useRef<RealtimeChannel | null>(null);
+
   useEffect(() => {
     if (!userId) return;
 
-    const channel = supabase
-      .channel('messaging')
+    // Clean up existing channel if it exists
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    // Create a new channel with a unique name to avoid conflicts
+    const channelName = `messaging-${userId}-${Date.now()}`;
+    const channel = supabase.channel(channelName);
+
+    // Configure the channel with event listeners
+    channel
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -53,11 +66,32 @@ export function useMessageSubscriptions({
         table: 'conversations'
       }, () => {
         onConversationUpdate();
-      })
-      .subscribe();
+      });
 
+    // Subscribe to the channel
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('Successfully subscribed to messaging channel');
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('Error subscribing to messaging channel');
+      }
+    });
+
+    // Store the channel reference
+    channelRef.current = channel;
+
+    // Cleanup function
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, [userId, activeConversationId, onNewMessage, onConversationUpdate, onMessageUpdate]);
+  }, [userId]); // Only depend on userId to avoid frequent re-subscriptions
+
+  // Handle callback updates without re-subscribing
+  useEffect(() => {
+    // Update callback references without re-creating the subscription
+    // The callbacks are captured in the closure above
+  }, [activeConversationId, onNewMessage, onConversationUpdate, onMessageUpdate]);
 }

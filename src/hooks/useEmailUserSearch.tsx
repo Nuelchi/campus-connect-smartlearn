@@ -23,36 +23,29 @@ export function useEmailUserSearch() {
     setFoundUser(null);
     
     try {
-      // Search by first/last name containing email-like pattern as fallback
-      const emailUsername = email.split('@')[0];
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*")
-        .or(`first_name.ilike.%${emailUsername}%,last_name.ilike.%${emailUsername}%`)
-        .neq("id", user.id)
-        .limit(1);
+      // Use the new database function to search by email
+      const { data, error } = await supabase
+        .rpc("search_user_by_email", {
+          search_email: email.trim().toLowerCase(),
+          requesting_user_id: user.id
+        });
 
-      if (profilesError) throw profilesError;
-
-      if (profiles && profiles.length > 0) {
-        const profile = profiles[0];
-        
-        // Get role for this user
-        const { data: userRole, error: roleError } = await supabase
-          .from("user_roles")
-          .select("*")
-          .eq("user_id", profile.id)
-          .single();
-
-        if (!roleError && userRole) {
-          setFoundUser({
-            ...profile,
-            role: userRole.role,
-            email: email // Use the searched email as display
-          });
-        } else {
-          setNotFound(true);
-        }
+      if (error) {
+        console.error("Error searching user by email:", error);
+        setNotFound(true);
+      } else if (data && data.length > 0) {
+        const userData = data[0];
+        setFoundUser({
+          id: userData.id,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          department: userData.department,
+          created_at: new Date().toISOString(), // We don't need this for display
+          updated_at: new Date().toISOString(), // We don't need this for display
+          avatar_url: null, // Not returned by our function
+          role: userData.role,
+          email: userData.email
+        });
       } else {
         setNotFound(true);
       }

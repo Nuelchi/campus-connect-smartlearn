@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Building2 } from "lucide-react";
+import { Search, Filter, Building2, Sparkles } from "lucide-react";
 import CourseCard from "./CourseCard";
 import CreateCourseDialog from "./CreateCourseDialog";
 import { useCourses } from "@/hooks/useCourses";
@@ -108,53 +108,58 @@ export default function CourseManagement() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="text-lg font-semibold animate-pulse">Loading courses...</div>
+        <div className="text-lg font-semibold animate-pulse flex items-center gap-2">
+          <Sparkles className="h-6 w-6 animate-spin" />
+          Loading courses...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900 min-h-screen p-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">
-            {role === "student" ? "Available Courses" : "Course Management"}
-          </h2>
-          <p className="text-muted-foreground">
-            {role === "student" 
-              ? "Discover and enroll in courses that interest you"
-              : "Manage your courses and track student progress"
-            }
-          </p>
-          {userDepartment && role === "student" && (
-            <p className="text-sm text-blue-600 mt-1">
-              <Building2 className="inline h-4 w-4 mr-1" />
-              Your Department: {userDepartment}
+      <div className="text-center space-y-4">
+        <div className="flex justify-between items-center">
+          <div className="text-left">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              {role === "student" ? "Discover Amazing Courses" : "Course Management"}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 text-lg mt-2">
+              {role === "student" 
+                ? "Find the perfect course to advance your learning journey"
+                : "Manage your courses and track student progress"
+              }
             </p>
+            {userDepartment && role === "student" && (
+              <div className="flex items-center mt-3 text-blue-600 dark:text-blue-400">
+                <Building2 className="h-5 w-5 mr-2" />
+                <span className="font-medium">Your Department: {userDepartment}</span>
+              </div>
+            )}
+          </div>
+          {(role === "teacher" || role === "admin") && (
+            <CreateCourseDialog onCourseCreated={fetchCourses} />
           )}
         </div>
-        {(role === "teacher" || role === "admin") && (
-          <CreateCourseDialog onCourseCreated={fetchCourses} />
-        )}
       </div>
 
       {/* Search and Filters */}
-      <Card>
+      <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
         <CardContent className="pt-6">
           <div className="flex gap-4 flex-wrap">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <div className="relative flex-1 min-w-[300px]">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <Input
                 placeholder="Search courses by title, description, or category..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-12 h-12 text-lg border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-blue-500 transition-colors"
               />
             </div>
             
             <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[220px] h-12 border-2 border-gray-200 dark:border-gray-600 rounded-xl">
                 <SelectValue placeholder="Select Department" />
               </SelectTrigger>
               <SelectContent>
@@ -168,7 +173,7 @@ export default function CourseManagement() {
             </Select>
 
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[200px] h-12 border-2 border-gray-200 dark:border-gray-600 rounded-xl">
                 <SelectValue placeholder="Select Category" />
               </SelectTrigger>
               <SelectContent>
@@ -181,8 +186,8 @@ export default function CourseManagement() {
               </SelectContent>
             </Select>
             
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
+            <Button variant="outline" className="h-12 px-6 border-2 border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700">
+              <Filter className="mr-2 h-5 w-5" />
               Filter
             </Button>
           </div>
@@ -191,23 +196,26 @@ export default function CourseManagement() {
 
       {/* Course Grid */}
       {filteredCourses.length === 0 ? (
-        <Card>
+        <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-xl">
           <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <h3 className="text-lg font-semibold mb-2">No courses found</h3>
-              <p className="text-muted-foreground">
+            <div className="text-center py-16">
+              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 rounded-full flex items-center justify-center">
+                <Sparkles className="h-12 w-12 text-blue-500" />
+              </div>
+              <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">No courses found</h3>
+              <p className="text-gray-600 dark:text-gray-300 text-lg max-w-md mx-auto">
                 {searchTerm || selectedCategory !== "all" || selectedDepartment !== "all"
-                  ? "Try adjusting your search terms or filters"
+                  ? "Try adjusting your search terms or filters to discover more courses"
                   : role === "teacher" 
-                    ? "Create your first course to get started"
-                    : "Check back later for new courses"
+                    ? "Create your first course to get started on your teaching journey"
+                    : "Check back later for exciting new courses"
                 }
               </p>
             </div>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {filteredCourses.map((course) => (
             <CourseCard
               key={course.id}

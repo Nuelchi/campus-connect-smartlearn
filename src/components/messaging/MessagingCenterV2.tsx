@@ -22,7 +22,8 @@ export default function MessagingCenterV2() {
     unreadCounts,
     loading,
     sendMessage,
-    startConversation
+    startConversation,
+    refetchConversations
   } = useWebSocketMessages();
   
   const [searchOpen, setSearchOpen] = useState(false);
@@ -40,8 +41,15 @@ export default function MessagingCenterV2() {
       ? activeConversation.participant2_id 
       : activeConversation.participant1_id;
 
-    await sendMessage(recipientId, messageContent);
-    setMessageContent("");
+    try {
+      await sendMessage(recipientId, messageContent);
+      setMessageContent("");
+      
+      // Refresh conversations to update timestamps
+      await refetchConversations();
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -52,9 +60,15 @@ export default function MessagingCenterV2() {
   };
 
   const handleStartConversation = async (userId: string) => {
-    const conversationId = await startConversation(userId);
-    if (conversationId) {
-      setActiveConversationId(conversationId);
+    try {
+      const conversationId = await startConversation(userId);
+      if (conversationId) {
+        setActiveConversationId(conversationId);
+        // Refresh conversations to show the new one
+        await refetchConversations();
+      }
+    } catch (error) {
+      console.error("Error starting conversation:", error);
     }
     setSearchOpen(false);
     setEmailSearchOpen(false);

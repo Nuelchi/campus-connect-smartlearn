@@ -1,102 +1,78 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import CourseManagement from "@/components/CourseManagement";
+import { Badge } from "@/components/ui/badge";
+import MessagingCenterV2 from "@/components/messaging/MessagingCenterV2";
+import StudentGrades from "./StudentGrades";
+import SubmissionsList from "./SubmissionsList";
+import AcademicCalendar from "./AcademicCalendar";
 import SettingsPanel from "@/components/dashboard/SettingsPanel";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
-import AssignmentManagement from "@/components/dashboard/AssignmentManagement";
 import CertificateCenter from "@/components/dashboard/CertificateCenter";
-import StudentGrades from "@/components/student/StudentGrades";
-import AcademicCalendar from "@/components/student/AcademicCalendar";
-import MessagingCenterV2 from "@/components/messaging/MessagingCenterV2";
-import { useAuth } from "@/hooks/useAuth";
 import { useCourses } from "@/hooks/useCourses";
-import CourseCard from "@/components/CourseCard";
-import SubmissionsList from "@/components/student/SubmissionsList";
 
 interface StudentSectionRendererProps {
   section: string | null;
 }
 
 export default function StudentSectionRenderer({ section }: StudentSectionRendererProps) {
-  const { role } = useAuth();
-  const { courses, loading, isEnrolledInCourse, enrollments } = useCourses();
-  
+  const { courses, loading } = useCourses();
+
   switch (section) {
     case "courses":
-      return <CourseManagement />;
-    case "my-courses":
-      console.log("All courses:", courses);
-      console.log("All enrollments:", enrollments);
-      console.log("User role:", role);
-      
-      const enrolledCourses = courses.filter(course => {
-        const isEnrolled = isEnrolledInCourse(course.id);
-        console.log(`Course ${course.title} (${course.id}) - enrolled:`, isEnrolled);
-        return isEnrolled;
-      });
-      
-      console.log("Filtered enrolled courses:", enrolledCourses);
-      
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle>My Enrolled Courses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="text-lg font-medium">Loading your courses...</div>
-              </div>
-            ) : enrolledCourses.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">You haven't enrolled in any courses yet.</p>
-                <p className="text-sm text-muted-foreground">
-                  Browse available courses to start your learning journey!
-                </p>
-                <div className="mt-4 text-xs text-gray-400">
-                  Debug: Found {courses.length} total courses, {enrollments.length} enrollments
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {enrolledCourses.map((course) => (
-                  <CourseCard
-                    key={course.id}
-                    course={course}
-                    userRole={role}
-                    isEnrolled={true}
-                  />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      );
-    case "assignments":
-      return <AssignmentManagement userRole={role} />;
-    case "submit-assignment":
       return (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">My Assignment Submissions</h1>
-              <p className="text-muted-foreground mt-2">
-                Track all your submitted assignments, grades, and feedback in one place
-              </p>
-            </div>
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">My Courses</h2>
+            <Badge variant="secondary">{courses.length} Enrolled</Badge>
           </div>
-          <SubmissionsList />
+          
+          {loading ? (
+            <div className="text-center py-8">Loading courses...</div>
+          ) : courses.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-8">
+                  <h3 className="text-lg font-semibold mb-2">No courses enrolled</h3>
+                  <p className="text-muted-foreground">Browse available courses to get started</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {courses.map((course) => (
+                <Card key={course.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="text-lg">{course.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">{course.description}</p>
+                    <Badge variant="outline">{course.category}</Badge>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       );
+    
     case "messaging":
       return <MessagingCenterV2 />;
+    
     case "grades":
       return <StudentGrades />;
-    case "certificates":
-      return <CertificateCenter />;
+    
+    case "assignments":
+      return <SubmissionsList />;
+    
     case "calendar":
       return <AcademicCalendar />;
+    
+    case "certificates":
+      return <CertificateCenter />;
+    
     case "notifications":
       return <NotificationCenter />;
+    
     case "help":
       return (
         <Card>
@@ -104,13 +80,28 @@ export default function StudentSectionRenderer({ section }: StudentSectionRender
             <CardTitle>Help & Support</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Help and support resources coming soon...</p>
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold mb-2">Getting Started</h3>
+                <p className="text-sm text-muted-foreground">Learn how to navigate the platform and access your courses.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Course Materials</h3>
+                <p className="text-sm text-muted-foreground">Find and download course materials, watch videos, and complete assignments.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Contact Support</h3>
+                <p className="text-sm text-muted-foreground">Need help? Contact our support team for assistance.</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       );
+    
     case "settings":
     case "account":
       return <SettingsPanel />;
+    
     default:
       return null;
   }

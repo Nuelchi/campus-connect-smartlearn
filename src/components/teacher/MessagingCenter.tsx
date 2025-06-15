@@ -1,15 +1,13 @@
+
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { MessageSquare, Send } from "lucide-react";
+import { DialogTrigger } from "@/components/ui/dialog";
+import { MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "@/components/ui/use-toast";
+import AnnouncementForm from "./messaging/AnnouncementForm";
+import AnnouncementCard from "./messaging/AnnouncementCard";
+import EmptyAnnouncementsState from "./messaging/EmptyAnnouncementsState";
 
 interface Message {
   id: string;
@@ -25,12 +23,6 @@ interface Message {
   };
 }
 
-interface Student {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-}
-
 interface Course {
   id: string;
   title: string;
@@ -39,20 +31,13 @@ interface Course {
 export default function MessagingCenter() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
-  const [messageForm, setMessageForm] = useState({
-    course_id: "",
-    title: "",
-    content: "",
-  });
 
   useEffect(() => {
     if (user) {
       fetchMessages();
-      fetchStudents();
       fetchCourses();
     }
   }, [user]);
@@ -93,52 +78,6 @@ export default function MessagingCenter() {
     }
   };
 
-  const fetchStudents = async () => {
-    try {
-      // Get teacher's courses first
-      const { data: teacherCourses, error: coursesError } = await supabase
-        .from("courses")
-        .select("id")
-        .eq("instructor_id", user?.id);
-
-      if (coursesError) throw coursesError;
-      
-      const courseIds = teacherCourses?.map(c => c.id) || [];
-      
-      if (courseIds.length === 0) {
-        setStudents([]);
-        return;
-      }
-
-      // Get students enrolled in teacher's courses
-      const { data: enrollments, error: enrollmentsError } = await supabase
-        .from("enrollments")
-        .select("student_id")
-        .in("course_id", courseIds);
-
-      if (enrollmentsError) throw enrollmentsError;
-      
-      const studentIds = [...new Set(enrollments?.map(e => e.student_id) || [])];
-      
-      if (studentIds.length === 0) {
-        setStudents([]);
-        return;
-      }
-
-      // Get student profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, first_name, last_name")
-        .in("id", studentIds);
-
-      if (profilesError) throw profilesError;
-      
-      setStudents(profiles || []);
-    } catch (error) {
-      console.error("Error fetching students:", error);
-    }
-  };
-
   const fetchCourses = async () => {
     try {
       const { data, error } = await supabase
@@ -155,45 +94,6 @@ export default function MessagingCenter() {
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from("course_discussions")
-        .insert({
-          author_id: user.id,
-          course_id: messageForm.course_id,
-          title: messageForm.title,
-          content: messageForm.content,
-          is_announcement: true,
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Announcement posted successfully!",
-      });
-
-      setMessageForm({
-        course_id: "",
-        title: "",
-        content: "",
-      });
-      setIsComposeOpen(false);
-      fetchMessages();
-    } catch (error) {
-      console.error("Error sending message:", error);
-      toast({
-        title: "Error",
-        description: "Failed to post announcement. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   if (loading) {
     return <div className="text-center">Loading messaging center...</div>;
   }
@@ -202,105 +102,28 @@ export default function MessagingCenter() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Course Announcements</h2>
-        <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <MessageSquare className="mr-2 h-4 w-4" />
-              Create Announcement
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Create Course Announcement</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSendMessage} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="course">Course</Label>
-                <Select value={messageForm.course_id} onValueChange={(value) => setMessageForm(prev => ({ ...prev, course_id: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select course" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {courses.map((course) => (
-                      <SelectItem key={course.id} value={course.id}>
-                        {course.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={messageForm.title}
-                  onChange={(e) => setMessageForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Enter announcement title"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="content">Content</Label>
-                <Textarea
-                  id="content"
-                  value={messageForm.content}
-                  onChange={(e) => setMessageForm(prev => ({ ...prev, content: e.target.value }))}
-                  placeholder="Write your announcement"
-                  rows={4}
-                  required
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsComposeOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  <Send className="mr-2 h-4 w-4" />
-                  Post Announcement
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setIsComposeOpen(true)}>
+          <MessageSquare className="mr-2 h-4 w-4" />
+          Create Announcement
+        </Button>
       </div>
 
       <div className="grid gap-4">
         {messages.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-8">
-                <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold">No announcements yet</h3>
-                <p className="text-muted-foreground">Create your first course announcement</p>
-              </div>
-            </CardContent>
-          </Card>
+          <EmptyAnnouncementsState />
         ) : (
           messages.map((message) => (
-            <Card key={message.id}>
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{message.title}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      By: {message.sender_profile?.first_name} {message.sender_profile?.last_name}
-                    </p>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(message.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm">{message.content}</p>
-              </CardContent>
-            </Card>
+            <AnnouncementCard key={message.id} message={message} />
           ))
         )}
       </div>
+
+      <AnnouncementForm
+        open={isComposeOpen}
+        onOpenChange={setIsComposeOpen}
+        courses={courses}
+        onAnnouncementPosted={fetchMessages}
+      />
     </div>
   );
 }

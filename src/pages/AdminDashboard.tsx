@@ -5,8 +5,15 @@ import DashboardWelcome from "@/components/dashboard/DashboardWelcome";
 import DashboardStats from "@/components/DashboardStats";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
+import AnalyticsDashboard from "@/components/dashboard/AnalyticsDashboard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tab = searchParams.get("tab");
+
   // Mock data - replace with real data from your API
   const stats = {
     totalCourses: 45,
@@ -45,7 +52,7 @@ export default function AdminDashboard() {
       title: "Analytics Dashboard",
       description: "View platform analytics",
       icon: <BarChart className="h-6 w-6" />,
-      onClick: () => console.log("Analytics dashboard"),
+      onClick: () => navigate("/dashboard?tab=analytics"),
     },
     {
       title: "Add Administrator",
@@ -54,6 +61,16 @@ export default function AdminDashboard() {
       onClick: () => console.log("Add administrator"),
     },
   ];
+
+  const handleTabChange = (value: string) => {
+    if (value === "overview") {
+      navigate("/dashboard");
+    } else {
+      navigate(`/dashboard?tab=${value}`);
+    }
+  };
+
+  const currentTab = tab || "overview";
 
   return (
     <DashboardLayout 
@@ -65,10 +82,23 @@ export default function AdminDashboard() {
       <div className="space-y-8">
         <DashboardStats role="admin" stats={stats} />
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <QuickActions actions={quickActions} />
-          <RecentActivity />
-        </div>
+        <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="overview">Dashboard Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics & Reports</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <QuickActions actions={quickActions} />
+              <RecentActivity />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="analytics">
+            <AnalyticsDashboard />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

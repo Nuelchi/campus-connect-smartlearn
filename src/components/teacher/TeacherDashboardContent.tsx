@@ -4,6 +4,7 @@ import DashboardStats from "@/components/DashboardStats";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import TeacherCourseManagement from "./TeacherCourseManagement";
 import TeacherQuickActions from "./TeacherQuickActions";
+import TeacherAnalyticsDashboard from "./TeacherAnalyticsDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -44,9 +45,10 @@ export default function TeacherDashboardContent({ tab }: TeacherDashboardContent
         <DashboardStats role="teacher" stats={stats} />
         
         <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Dashboard Overview</TabsTrigger>
             <TabsTrigger value="courses">Course Management</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics & Reports</TabsTrigger>
           </TabsList>
           
           <TabsContent value="overview" className="space-y-8">
@@ -58,6 +60,10 @@ export default function TeacherDashboardContent({ tab }: TeacherDashboardContent
           
           <TabsContent value="courses">
             <TeacherCourseManagement />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <TeacherAnalyticsDashboard />
           </TabsContent>
         </Tabs>
       </div>

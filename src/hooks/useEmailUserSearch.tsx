@@ -6,6 +6,15 @@ import { useAuth } from "@/hooks/useAuth";
 
 type Profile = Tables<"profiles">;
 
+interface SearchUserResult {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  department: string;
+  role: string;
+}
+
 export function useEmailUserSearch() {
   const { user } = useAuth();
   const [email, setEmail] = useState("");
@@ -25,15 +34,15 @@ export function useEmailUserSearch() {
     try {
       // Use the new database function to search by email
       const { data, error } = await supabase
-        .rpc("search_user_by_email", {
+        .rpc("search_user_by_email" as any, {
           search_email: email.trim().toLowerCase(),
           requesting_user_id: user.id
-        });
+        }) as { data: SearchUserResult[] | null; error: any };
 
       if (error) {
         console.error("Error searching user by email:", error);
         setNotFound(true);
-      } else if (data && data.length > 0) {
+      } else if (data && Array.isArray(data) && data.length > 0) {
         const userData = data[0];
         setFoundUser({
           id: userData.id,

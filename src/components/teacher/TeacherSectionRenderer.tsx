@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MessagingCenter from "./MessagingCenter";
 import Gradebook from "./Gradebook";
 import TeacherCourseManagement from "./TeacherCourseManagement";
+import TeacherAnalyticsDashboard from "./TeacherAnalyticsDashboard";
 import SettingsPanel from "@/components/dashboard/SettingsPanel";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import CreateCourseDialog from "./CreateCourseDialog";
@@ -67,16 +68,7 @@ export default function TeacherSectionRenderer({ section }: TeacherSectionRender
         </Card>
       );
     case "analytics":
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle>Analytics Dashboard</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Analytics dashboard coming soon...</p>
-          </CardContent>
-        </Card>
-      );
+      return <TeacherAnalyticsDashboard />;
     case "calendar":
       return (
         <Card>

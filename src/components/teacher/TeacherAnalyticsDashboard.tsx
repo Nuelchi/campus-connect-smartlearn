@@ -1,96 +1,77 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
+import { Users, BookOpen, FileText, TrendingUp } from "lucide-react";
 import { useTeacherAnalytics } from "@/hooks/useTeacherAnalytics";
-import { TrendingUp, Users, BookOpen, FileText, CheckCircle } from "lucide-react";
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function TeacherAnalyticsDashboard() {
-  const { analytics, loading } = useTeacherAnalytics();
+  const { analytics, loading, refetch } = useTeacherAnalytics();
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg font-semibold animate-pulse">Loading analytics...</div>
       </div>
     );
   }
 
-  const chartConfig = {
-    enrollments: {
-      label: "Enrollments",
-      color: "#2563eb",
-    },
-    submissions: {
-      label: "Submissions", 
-      color: "#dc2626",
-    },
-  };
-
   return (
     <div className="space-y-6">
-      {/* Key Metrics */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Teacher Analytics</h2>
+        <button 
+          onClick={refetch}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+        >
+          Refresh Data
+        </button>
+      </div>
+
+      {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">My Courses</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.totalCourses}</div>
-            <p className="text-xs text-muted-foreground">
-              Courses you teach
-            </p>
+            <p className="text-xs text-muted-foreground">Active courses</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Students</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.totalStudents}</div>
-            <p className="text-xs text-muted-foreground">
-              Students in your courses
-            </p>
+            <p className="text-xs text-muted-foreground">Enrolled students</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Assignments</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Assignments</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.totalAssignments}</div>
-            <p className="text-xs text-muted-foreground">
-              Total assignments
-            </p>
+            <p className="text-xs text-muted-foreground">Created assignments</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Submissions</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.totalSubmissions}</div>
-            <p className="text-xs text-muted-foreground">
-              Assignment submissions
-            </p>
+            <p className="text-xs text-muted-foreground">Student submissions</p>
           </CardContent>
         </Card>
       </div>
@@ -103,27 +84,28 @@ export default function TeacherAnalyticsDashboard() {
             <CardTitle>Monthly Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig}>
+            <ResponsiveContainer width="100%" height={300}>
               <LineChart data={analytics.monthlyActivity}>
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <Tooltip />
                 <Line 
                   type="monotone" 
                   dataKey="enrollments" 
-                  stroke="var(--color-enrollments)" 
+                  stroke="#8884d8" 
                   strokeWidth={2}
                   name="Enrollments"
                 />
                 <Line 
                   type="monotone" 
                   dataKey="submissions" 
-                  stroke="var(--color-submissions)" 
+                  stroke="#82ca9d" 
                   strokeWidth={2}
                   name="Submissions"
                 />
               </LineChart>
-            </ChartContainer>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
@@ -133,31 +115,88 @@ export default function TeacherAnalyticsDashboard() {
             <CardTitle>Course Enrollments</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig}>
-              <BarChart data={analytics.courseEnrollments}>
-                <XAxis dataKey="course" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="enrollments" fill="var(--color-enrollments)" />
-              </BarChart>
-            </ChartContainer>
+            {analytics.courseEnrollments.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={analytics.courseEnrollments}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="course" 
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    interval={0}
+                  />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="enrollments" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                No course enrollment data available
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Assignment Submissions Chart */}
-        <Card className="lg:col-span-2">
+        <Card>
           <CardHeader>
-            <CardTitle>Assignment Submissions by Assignment</CardTitle>
+            <CardTitle>Assignment Submissions</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig}>
-              <BarChart data={analytics.assignmentSubmissions}>
-                <XAxis dataKey="assignment" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="submissions" fill="var(--color-submissions)" />
-              </BarChart>
-            </ChartContainer>
+            {analytics.assignmentSubmissions.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={analytics.assignmentSubmissions}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="assignment" 
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    interval={0}
+                  />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="submissions" fill="#82ca9d" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                No assignment submission data available
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Activity Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Stats</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Average Students per Course</span>
+              <span className="text-lg font-bold">
+                {analytics.totalCourses > 0 ? Math.round(analytics.totalStudents / analytics.totalCourses) : 0}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Average Assignments per Course</span>
+              <span className="text-lg font-bold">
+                {analytics.totalCourses > 0 ? Math.round(analytics.totalAssignments / analytics.totalCourses) : 0}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Submission Rate</span>
+              <span className="text-lg font-bold">
+                {analytics.totalAssignments > 0 ? Math.round((analytics.totalSubmissions / analytics.totalAssignments) * 100) : 0}%
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Active Courses</span>
+              <span className="text-lg font-bold">{analytics.totalCourses}</span>
+            </div>
           </CardContent>
         </Card>
       </div>

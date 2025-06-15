@@ -44,8 +44,8 @@ export default function CourseCard({
       const conversationId = await startCourseConversation(course.id);
       if (conversationId) {
         toast({
-          title: "Chat started",
-          description: "You can now message the course instructor",
+          title: "Chat ready",
+          description: "You can now start a conversation with the instructor",
         });
         // Navigate to messaging section with conversation ID
         window.location.href = `/dashboard?section=messaging&conversation=${conversationId}`;

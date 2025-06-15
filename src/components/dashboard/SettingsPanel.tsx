@@ -18,6 +18,7 @@ export default function SettingsPanel() {
   const [profileData, setProfileData] = useState({
     first_name: "",
     last_name: "",
+    username: "",
     avatar_url: ""
   });
   const [notificationSettings, setNotificationSettings] = useState({
@@ -32,6 +33,7 @@ export default function SettingsPanel() {
       setProfileData({
         first_name: profile.first_name || "",
         last_name: profile.last_name || "",
+        username: profile.username || "",
         avatar_url: profile.avatar_url || ""
       });
     }
@@ -75,12 +77,18 @@ export default function SettingsPanel() {
     if (profileData.first_name && profileData.last_name) {
       return `${profileData.first_name} ${profileData.last_name}`;
     }
+    if (profileData.username) {
+      return profileData.username;
+    }
     return user?.email?.split('@')[0] || "User";
   };
 
   const getInitials = () => {
     if (profileData.first_name && profileData.last_name) {
       return `${profileData.first_name[0]}${profileData.last_name[0]}`.toUpperCase();
+    }
+    if (profileData.username) {
+      return profileData.username.slice(0, 2).toUpperCase();
     }
     return user?.email?.[0]?.toUpperCase() || "U";
   };
@@ -129,6 +137,15 @@ export default function SettingsPanel() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                value={profileData.username}
+                onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
+                placeholder="Choose a unique username"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="first_name">First Name</Label>

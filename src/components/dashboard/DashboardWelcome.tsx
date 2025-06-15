@@ -1,7 +1,10 @@
+
 import { useAuth } from "@/hooks/useAuth";
+
 interface DashboardWelcomeProps {
   roleSpecificMessage?: string;
 }
+
 export default function DashboardWelcome({
   roleSpecificMessage
 }: DashboardWelcomeProps) {
@@ -10,24 +13,32 @@ export default function DashboardWelcome({
     profile,
     role
   } = useAuth();
+
   const getDisplayName = () => {
     if (profile?.first_name && profile?.last_name) {
       return `${profile.first_name} ${profile.last_name}`;
     }
+    if (profile?.username) {
+      return profile.username;
+    }
     return user?.email?.split('@')[0] || "User";
   };
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
     if (hour < 18) return "Good afternoon";
     return "Good evening";
   };
-  return <div className="mb-8">
+
+  return (
+    <div className="mb-8">
       <h1 className="text-3xl font-bold mb-2 text-gray-400">
         {getGreeting()}, {getDisplayName()}!
       </h1>
       <p className="text-lg text-muted-foreground">
         {roleSpecificMessage || `Welcome to your ${role} dashboard.`}
       </p>
-    </div>;
+    </div>
+  );
 }

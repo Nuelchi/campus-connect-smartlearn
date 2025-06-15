@@ -23,6 +23,9 @@ export function SidebarUserProfile() {
     if (profile?.first_name && profile?.last_name) {
       return `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase();
     }
+    if (profile?.username) {
+      return profile.username.slice(0, 2).toUpperCase();
+    }
     if (user?.email) {
       return user.email[0].toUpperCase();
     }
@@ -32,6 +35,9 @@ export function SidebarUserProfile() {
   const getDisplayName = () => {
     if (profile?.first_name && profile?.last_name) {
       return `${profile.first_name} ${profile.last_name}`;
+    }
+    if (profile?.username) {
+      return profile.username;
     }
     return user?.email || "User";
   };

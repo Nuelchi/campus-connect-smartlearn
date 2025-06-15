@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,13 +26,13 @@ export default function CourseManagement() {
   useEffect(() => {
     const fetchUserDepartment = async () => {
       if (user) {
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from("profiles")
           .select("department")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
         
-        if (profile?.department) {
+        if (!error && profile?.department) {
           setUserDepartment(profile.department);
           setSelectedDepartment(profile.department); // Default to user's department
         }

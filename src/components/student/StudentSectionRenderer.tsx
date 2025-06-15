@@ -5,12 +5,15 @@ import SettingsPanel from "@/components/dashboard/SettingsPanel";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import AssignmentManagement from "@/components/dashboard/AssignmentManagement";
 import CertificateCenter from "@/components/dashboard/CertificateCenter";
+import { useAuth } from "@/hooks/useAuth";
 
 interface StudentSectionRendererProps {
   section: string | null;
 }
 
 export default function StudentSectionRenderer({ section }: StudentSectionRendererProps) {
+  const { role } = useAuth();
+  
   switch (section) {
     case "courses":
       return <CourseManagement />;
@@ -26,7 +29,7 @@ export default function StudentSectionRenderer({ section }: StudentSectionRender
         </Card>
       );
     case "assignments":
-      return <AssignmentManagement />;
+      return <AssignmentManagement userRole={role} />;
     case "submit-assignment":
       return (
         <Card>

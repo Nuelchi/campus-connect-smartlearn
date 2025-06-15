@@ -25,33 +25,6 @@ export default function TeacherDashboardContent({ tab }: TeacherDashboardContent
     completionRate: 78,
   };
 
-  const recentActivities = [
-    {
-      id: "1",
-      type: "student" as const,
-      title: "New Student Enrollment",
-      description: "John Doe enrolled in React Basics",
-      timestamp: "1 hour ago",
-      status: "completed" as const,
-    },
-    {
-      id: "2",
-      type: "assignment" as const,
-      title: "JavaScript Quiz",
-      description: "15 submissions received",
-      timestamp: "3 hours ago",
-      status: "in-progress" as const,
-    },
-    {
-      id: "3",
-      type: "course" as const,
-      title: "Python Advanced",
-      description: "Course updated with new content",
-      timestamp: "1 day ago",
-      status: "completed" as const,
-    },
-  ];
-
   const handleTabChange = (value: string) => {
     console.log("Tab changed to:", value);
     if (value === "overview") {
@@ -79,7 +52,7 @@ export default function TeacherDashboardContent({ tab }: TeacherDashboardContent
           <TabsContent value="overview" className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <TeacherQuickActions />
-              <RecentActivity activities={recentActivities} />
+              <RecentActivity />
             </div>
           </TabsContent>
           

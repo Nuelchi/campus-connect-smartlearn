@@ -1,7 +1,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, User, BookOpen, FileText } from "lucide-react";
+import { Clock, User, BookOpen, FileText, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useRecentActivity } from "@/hooks/useRecentActivity";
 
 interface ActivityItem {
   id: string;
@@ -13,7 +15,6 @@ interface ActivityItem {
 }
 
 interface RecentActivityProps {
-  activities: ActivityItem[];
   title?: string;
 }
 
@@ -45,15 +46,33 @@ const getStatusColor = (status?: ActivityItem['status']) => {
   }
 };
 
-export default function RecentActivity({ activities, title = "Recent Activity" }: RecentActivityProps) {
+export default function RecentActivity({ title = "Recent Activity" }: RecentActivityProps) {
+  const { activities, loading, refetch } = useRecentActivity();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={refetch}
+            disabled={loading}
+            className="h-8 w-8 p-0"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {activities.length === 0 ? (
+          {loading ? (
+            <div className="text-center text-muted-foreground py-8">
+              <Clock className="h-12 w-12 mx-auto mb-4 opacity-50 animate-pulse" />
+              <p>Loading recent activity...</p>
+            </div>
+          ) : activities.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No recent activity</p>

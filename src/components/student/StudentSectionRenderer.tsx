@@ -9,6 +9,7 @@ import AcademicCalendar from "@/components/student/AcademicCalendar";
 import { useAuth } from "@/hooks/useAuth";
 import { useCourses } from "@/hooks/useCourses";
 import CourseCard from "@/components/CourseCard";
+import SubmissionsList from "@/components/student/SubmissionsList";
 
 interface StudentSectionRendererProps {
   section: string | null;
@@ -73,14 +74,17 @@ export default function StudentSectionRenderer({ section }: StudentSectionRender
       return <AssignmentManagement userRole={role} />;
     case "submit-assignment":
       return (
-        <Card>
-          <CardHeader>
-            <CardTitle>Submit Assignment</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Assignment submission functionality coming soon...</p>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">My Assignment Submissions</h1>
+              <p className="text-muted-foreground mt-2">
+                Track all your submitted assignments, grades, and feedback in one place
+              </p>
+            </div>
+          </div>
+          <SubmissionsList />
+        </div>
       );
     case "grades":
       return <StudentGrades />;

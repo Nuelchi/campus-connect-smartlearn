@@ -52,33 +52,6 @@ export default function StudentDashboard() {
     },
   ];
 
-  const recentActivities = [
-    {
-      id: "1",
-      type: "assignment" as const,
-      title: "Math Assignment #3",
-      description: "Due in 2 days",
-      timestamp: "2 hours ago",
-      status: "pending" as const,
-    },
-    {
-      id: "2",
-      type: "course" as const,
-      title: "JavaScript Basics",
-      description: "New lesson available",
-      timestamp: "1 day ago",
-      status: "in-progress" as const,
-    },
-    {
-      id: "3",
-      type: "submission" as const,
-      title: "History Essay",
-      description: "Submitted successfully",
-      timestamp: "3 days ago",
-      status: "completed" as const,
-    },
-  ];
-
   return (
     <DashboardLayout 
       title="Student Dashboard" 
@@ -91,7 +64,7 @@ export default function StudentDashboard() {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <QuickActions actions={quickActions} />
-          <RecentActivity activities={recentActivities} />
+          <RecentActivity />
         </div>
       </div>
     </DashboardLayout>

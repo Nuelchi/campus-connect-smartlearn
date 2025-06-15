@@ -19,66 +19,31 @@ export const useRecentActivity = () => {
     try {
       setLoading(true);
       
-      // Get recent courses created
+      // Get recent courses created (separate queries to avoid join issues)
       const { data: recentCourses } = await supabase
         .from('courses')
-        .select(`
-          id,
-          title,
-          created_at,
-          profiles:instructor_id (
-            first_name,
-            last_name
-          )
-        `)
+        .select('id, title, created_at, instructor_id')
         .order('created_at', { ascending: false })
         .limit(5);
 
       // Get recent enrollments
       const { data: recentEnrollments } = await supabase
         .from('enrollments')
-        .select(`
-          id,
-          enrolled_at,
-          courses:course_id (
-            title
-          ),
-          profiles:student_id (
-            first_name,
-            last_name
-          )
-        `)
+        .select('id, enrolled_at, course_id, student_id')
         .order('enrolled_at', { ascending: false })
         .limit(5);
 
       // Get recent assignments
       const { data: recentAssignments } = await supabase
         .from('assignments')
-        .select(`
-          id,
-          title,
-          created_at,
-          courses:course_id (
-            title
-          )
-        `)
+        .select('id, title, created_at, course_id')
         .order('created_at', { ascending: false })
         .limit(5);
 
       // Get recent submissions
       const { data: recentSubmissions } = await supabase
         .from('assignment_submissions')
-        .select(`
-          id,
-          submitted_at,
-          assignments:assignment_id (
-            title
-          ),
-          profiles:student_id (
-            first_name,
-            last_name
-          )
-        `)
+        .select('id, submitted_at, assignment_id, student_id')
         .order('submitted_at', { ascending: false })
         .limit(5);
 
@@ -86,64 +51,98 @@ export const useRecentActivity = () => {
       const allActivities: ActivityItem[] = [];
 
       // Add course activities
-      recentCourses?.forEach(course => {
-        const instructorName = course.profiles 
-          ? `${course.profiles.first_name || ''} ${course.profiles.last_name || ''}`.trim()
-          : 'Unknown User';
-        
-        allActivities.push({
-          id: course.id,
-          type: 'course',
-          title: 'New Course Created',
-          description: `"${course.title}" by ${instructorName}`,
-          timestamp: formatTimestamp(course.created_at),
-          status: 'completed'
-        });
-      });
+      if (recentCourses) {
+        for (const course of recentCourses) {
+          // Get instructor profile separately
+          const { data: instructor } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', course.instructor_id)
+            .maybeSingle();
+
+          const instructorName = instructor 
+            ? `${instructor.first_name || ''} ${instructor.last_name || ''}`.trim()
+            : 'Unknown User';
+          
+          allActivities.push({
+            id: course.id,
+            type: 'course',
+            title: 'New Course Created',
+            description: `"${course.title}" by ${instructorName}`,
+            timestamp: formatTimestamp(course.created_at),
+            status: 'completed'
+          });
+        }
+      }
 
       // Add enrollment activities
-      recentEnrollments?.forEach(enrollment => {
-        const studentName = enrollment.profiles 
-          ? `${enrollment.profiles.first_name || ''} ${enrollment.profiles.last_name || ''}`.trim()
-          : 'Unknown User';
-        
-        allActivities.push({
-          id: enrollment.id,
-          type: 'student',
-          title: 'New Student Enrollment',
-          description: `${studentName} enrolled in "${enrollment.courses?.title || 'Unknown Course'}"`,
-          timestamp: formatTimestamp(enrollment.enrolled_at),
-          status: 'completed'
-        });
-      });
+      if (recentEnrollments) {
+        for (const enrollment of recentEnrollments) {
+          // Get student profile and course separately
+          const [{ data: student }, { data: course }] = await Promise.all([
+            supabase.from('profiles').select('first_name, last_name').eq('id', enrollment.student_id).maybeSingle(),
+            supabase.from('courses').select('title').eq('id', enrollment.course_id).maybeSingle()
+          ]);
+
+          const studentName = student 
+            ? `${student.first_name || ''} ${student.last_name || ''}`.trim()
+            : 'Unknown User';
+          
+          allActivities.push({
+            id: enrollment.id,
+            type: 'student',
+            title: 'New Student Enrollment',
+            description: `${studentName} enrolled in "${course?.title || 'Unknown Course'}"`,
+            timestamp: formatTimestamp(enrollment.enrolled_at),
+            status: 'completed'
+          });
+        }
+      }
 
       // Add assignment activities
-      recentAssignments?.forEach(assignment => {
-        allActivities.push({
-          id: assignment.id,
-          type: 'assignment',
-          title: 'New Assignment Created',
-          description: `"${assignment.title}" in ${assignment.courses?.title || 'Unknown Course'}`,
-          timestamp: formatTimestamp(assignment.created_at),
-          status: 'completed'
-        });
-      });
+      if (recentAssignments) {
+        for (const assignment of recentAssignments) {
+          // Get course separately
+          const { data: course } = await supabase
+            .from('courses')
+            .select('title')
+            .eq('id', assignment.course_id)
+            .maybeSingle();
+
+          allActivities.push({
+            id: assignment.id,
+            type: 'assignment',
+            title: 'New Assignment Created',
+            description: `"${assignment.title}" in ${course?.title || 'Unknown Course'}`,
+            timestamp: formatTimestamp(assignment.created_at),
+            status: 'completed'
+          });
+        }
+      }
 
       // Add submission activities
-      recentSubmissions?.forEach(submission => {
-        const studentName = submission.profiles 
-          ? `${submission.profiles.first_name || ''} ${submission.profiles.last_name || ''}`.trim()
-          : 'Unknown User';
-        
-        allActivities.push({
-          id: submission.id,
-          type: 'submission',
-          title: 'Assignment Submission',
-          description: `${studentName} submitted "${submission.assignments?.title || 'Unknown Assignment'}"`,
-          timestamp: formatTimestamp(submission.submitted_at),
-          status: 'completed'
-        });
-      });
+      if (recentSubmissions) {
+        for (const submission of recentSubmissions) {
+          // Get student profile and assignment separately
+          const [{ data: student }, { data: assignment }] = await Promise.all([
+            supabase.from('profiles').select('first_name, last_name').eq('id', submission.student_id).maybeSingle(),
+            supabase.from('assignments').select('title').eq('id', submission.assignment_id).maybeSingle()
+          ]);
+
+          const studentName = student 
+            ? `${student.first_name || ''} ${student.last_name || ''}`.trim()
+            : 'Unknown User';
+          
+          allActivities.push({
+            id: submission.id,
+            type: 'submission',
+            title: 'Assignment Submission',
+            description: `${studentName} submitted "${assignment?.title || 'Unknown Assignment'}"`,
+            timestamp: formatTimestamp(submission.submitted_at),
+            status: 'completed'
+          });
+        }
+      }
 
       // Sort all activities by timestamp (most recent first)
       allActivities.sort((a, b) => {

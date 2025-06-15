@@ -55,33 +55,6 @@ export default function AdminDashboard() {
     },
   ];
 
-  const recentActivities = [
-    {
-      id: "1",
-      type: "student" as const,
-      title: "Bulk User Registration",
-      description: "50 new students registered",
-      timestamp: "30 minutes ago",
-      status: "completed" as const,
-    },
-    {
-      id: "2",
-      type: "course" as const,
-      title: "Course Approval",
-      description: "Data Science course approved",
-      timestamp: "2 hours ago",
-      status: "completed" as const,
-    },
-    {
-      id: "3",
-      type: "student" as const,
-      title: "Account Suspension",
-      description: "Suspended inactive accounts",
-      timestamp: "1 day ago",
-      status: "completed" as const,
-    },
-  ];
-
   return (
     <DashboardLayout 
       title="Admin Dashboard" 
@@ -94,7 +67,7 @@ export default function AdminDashboard() {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <QuickActions actions={quickActions} />
-          <RecentActivity activities={recentActivities} />
+          <RecentActivity />
         </div>
       </div>
     </DashboardLayout>

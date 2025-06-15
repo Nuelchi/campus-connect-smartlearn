@@ -3,10 +3,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Users, Calendar, BookOpen, Play, Star } from "lucide-react";
+import { Users, Calendar, BookOpen, Play, Star, X, Maximize } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 type Course = Tables<"courses">;
+type CourseMaterial = Tables<"course_materials">;
 
 interface CourseCardProps {
   course: Course;
@@ -25,11 +28,34 @@ export default function CourseCard({
   userRole,
   isEnrolled = false 
 }: CourseCardProps) {
+  const [materials, setMaterials] = useState<CourseMaterial[]>([]);
+  const [showPdfPopup, setShowPdfPopup] = useState(false);
+  const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchCourseMaterials();
+  }, [course.id]);
+
+  const fetchCourseMaterials = async () => {
+    const { data, error } = await supabase
+      .from("course_materials")
+      .select("*")
+      .eq("course_id", course.id)
+      .eq("content_type", "PDF");
+
+    if (!error && data) {
+      setMaterials(data);
+    }
+  };
+
   const handleViewCourse = () => {
-    // Navigate to course detail page - for now, we'll log it
     console.log("Viewing course:", course.id);
-    // TODO: Add proper navigation to course detail page
     window.location.href = `/course/${course.id}`;
+  };
+
+  const handlePdfClick = (pdfUrl: string) => {
+    setSelectedPdf(pdfUrl);
+    setShowPdfPopup(true);
   };
 
   const getCategoryColor = (category: string | null) => {
@@ -47,119 +73,179 @@ export default function CourseCard({
     return colors[category as keyof typeof colors] || "bg-slate-500";
   };
 
+  const pdfMaterials = materials.filter(material => 
+    material.file_url?.endsWith('.pdf')
+  );
+
   return (
-    <Card className="group overflow-hidden bg-white dark:bg-gray-900 border-0 shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2">
-      {/* Thumbnail Section */}
-      <div className="relative overflow-hidden">
-        <AspectRatio ratio={16 / 9}>
-          {course.image_url ? (
-            <img 
-              src={course.image_url} 
-              alt={course.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-          ) : (
-            <div className={`w-full h-full ${getCategoryColor(course.category)} flex items-center justify-center relative overflow-hidden`}>
-              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-black/20"></div>
-              <BookOpen className="h-16 w-16 text-white/80" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="text-white font-bold text-lg line-clamp-2">{course.title}</h3>
+    <>
+      <Card className="group overflow-hidden bg-white dark:bg-gray-900 border-0 shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2">
+        {/* Thumbnail Section */}
+        <div className="relative overflow-hidden">
+          <AspectRatio ratio={16 / 9}>
+            {course.image_url ? (
+              <img 
+                src={course.image_url} 
+                alt={course.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+            ) : (
+              <div className={`w-full h-full ${getCategoryColor(course.category)} flex items-center justify-center relative overflow-hidden`}>
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-black/20"></div>
+                <BookOpen className="h-16 w-16 text-white/80" />
+                <div className="absolute bottom-4 left-4 right-4">
+                  <h3 className="text-white font-bold text-lg line-clamp-2">{course.title}</h3>
+                </div>
               </div>
-            </div>
-          )}
-        </AspectRatio>
-        
-        {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <Button 
-            onClick={handleViewCourse}
-            size="lg" 
-            className="bg-white/90 text-black hover:bg-white transform scale-90 group-hover:scale-100 transition-transform duration-300"
-          >
-            <Play className="mr-2 h-5 w-5" />
-            View Course
-          </Button>
-        </div>
+            )}
+          </AspectRatio>
+          
+          {/* PDF Overlay */}
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            {pdfMaterials.length > 0 ? (
+              <div className="w-full h-full p-4 flex flex-col">
+                <div className="flex-1 bg-white rounded-lg overflow-hidden mb-4">
+                  <embed 
+                    src={pdfMaterials[0].file_url}
+                    type="application/pdf"
+                    className="w-full h-full"
+                    onClick={() => handlePdfClick(pdfMaterials[0].file_url!)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => handlePdfClick(pdfMaterials[0].file_url!)}
+                    size="sm" 
+                    className="bg-white/90 text-black hover:bg-white flex-1"
+                  >
+                    <Maximize className="mr-2 h-4 w-4" />
+                    View PDF
+                  </Button>
+                  <Button 
+                    onClick={handleViewCourse}
+                    size="sm" 
+                    className="bg-blue-500/90 text-white hover:bg-blue-600 flex-1"
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    View Course
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button 
+                onClick={handleViewCourse}
+                size="lg" 
+                className="bg-white/90 text-black hover:bg-white transform scale-90 group-hover:scale-100 transition-transform duration-300"
+              >
+                <Play className="mr-2 h-5 w-5" />
+                View Course
+              </Button>
+            )}
+          </div>
 
-        {/* Status Badge */}
-        <div className="absolute top-3 right-3">
-          <Badge 
-            variant={course.is_active ? "default" : "secondary"}
-            className={`${course.is_active ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-500'} text-white border-0`}
-          >
-            {course.is_active ? "Active" : "Inactive"}
-          </Badge>
-        </div>
-
-        {/* Category Badge */}
-        {course.category && (
-          <div className="absolute top-3 left-3">
-            <Badge className={`${getCategoryColor(course.category)} text-white border-0 text-xs`}>
-              {course.category}
+          {/* Status Badge */}
+          <div className="absolute top-3 right-3">
+            <Badge 
+              variant={course.is_active ? "default" : "secondary"}
+              className={`${course.is_active ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-500'} text-white border-0`}
+            >
+              {course.is_active ? "Active" : "Inactive"}
             </Badge>
           </div>
-        )}
-      </div>
-      
-      <CardContent className="p-6">
-        <div className="space-y-3">
-          <CardTitle className="text-xl font-bold text-gray-900 dark:text-white line-clamp-2 leading-tight">
-            {course.title}
-          </CardTitle>
-          
-          <CardDescription className="text-gray-600 dark:text-gray-300 line-clamp-3 text-sm leading-relaxed">
-            {course.description}
-          </CardDescription>
 
-          {/* Stats Row */}
-          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 pt-2">
-            <div className="flex items-center gap-1">
-              <Users size={16} className="text-blue-500" />
-              <span className="font-medium">{enrollmentCount}</span>
+          {/* Category Badge */}
+          {course.category && (
+            <div className="absolute top-3 left-3">
+              <Badge className={`${getCategoryColor(course.category)} text-white border-0 text-xs`}>
+                {course.category}
+              </Badge>
             </div>
-            <div className="flex items-center gap-1">
-              <Calendar size={16} className="text-green-500" />
-              <span>{new Date(course.created_at).toLocaleDateString()}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Star size={16} className="text-yellow-500" />
-              <span>4.8</span>
+          )}
+        </div>
+        
+        <CardContent className="p-6">
+          <div className="space-y-3">
+            <CardTitle className="text-xl font-bold text-gray-900 dark:text-white line-clamp-2 leading-tight">
+              {course.title}
+            </CardTitle>
+            
+            <CardDescription className="text-gray-600 dark:text-gray-300 line-clamp-3 text-sm leading-relaxed">
+              {course.description}
+            </CardDescription>
+
+            {/* Stats Row */}
+            <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 pt-2">
+              <div className="flex items-center gap-1">
+                <Users size={16} className="text-blue-500" />
+                <span className="font-medium">{enrollmentCount}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Calendar size={16} className="text-green-500" />
+                <span>{new Date(course.created_at).toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Star size={16} className="text-yellow-500" />
+                <span>4.8</span>
+              </div>
             </div>
           </div>
+        </CardContent>
+        
+        <CardFooter className="p-6 pt-0 space-y-3">
+          {userRole === "student" && !isEnrolled && onEnroll && (
+            <Button 
+              onClick={() => onEnroll(course.id)} 
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0 h-11 font-semibold"
+              disabled={!course.is_active}
+            >
+              Enroll Now
+            </Button>
+          )}
+          
+          {userRole === "student" && isEnrolled && (
+            <Button 
+              onClick={handleViewCourse}
+              className="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white border-0 h-11 font-semibold"
+            >
+              <Play className="mr-2 h-4 w-4" />
+              Continue Learning
+            </Button>
+          )}
+          
+          {(userRole === "teacher" || userRole === "admin") && onManage && (
+            <Button 
+              onClick={() => onManage(course.id)} 
+              variant="outline" 
+              className="w-full h-11 font-semibold border-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              Manage Course
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+
+      {/* PDF Popup Modal */}
+      {showPdfPopup && selectedPdf && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-6xl h-full max-h-[90vh] bg-white rounded-lg overflow-hidden">
+            <div className="absolute top-4 right-4 z-10">
+              <Button
+                onClick={() => setShowPdfPopup(false)}
+                variant="secondary"
+                size="sm"
+                className="bg-black/70 text-white hover:bg-black/80"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <embed 
+              src={selectedPdf}
+              type="application/pdf"
+              className="w-full h-full"
+            />
+          </div>
         </div>
-      </CardContent>
-      
-      <CardFooter className="p-6 pt-0 space-y-3">
-        {userRole === "student" && !isEnrolled && onEnroll && (
-          <Button 
-            onClick={() => onEnroll(course.id)} 
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0 h-11 font-semibold"
-            disabled={!course.is_active}
-          >
-            Enroll Now
-          </Button>
-        )}
-        
-        {userRole === "student" && isEnrolled && (
-          <Button 
-            onClick={handleViewCourse}
-            className="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white border-0 h-11 font-semibold"
-          >
-            <Play className="mr-2 h-4 w-4" />
-            Continue Learning
-          </Button>
-        )}
-        
-        {(userRole === "teacher" || userRole === "admin") && onManage && (
-          <Button 
-            onClick={() => onManage(course.id)} 
-            variant="outline" 
-            className="w-full h-11 font-semibold border-2 hover:bg-gray-50 dark:hover:bg-gray-800"
-          >
-            Manage Course
-          </Button>
-        )}
-      </CardFooter>
-    </Card>
+      )}
+    </>
   );
 }

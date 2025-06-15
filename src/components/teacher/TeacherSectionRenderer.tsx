@@ -8,6 +8,7 @@ import SettingsPanel from "@/components/dashboard/SettingsPanel";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import CreateCourseDialog from "./CreateCourseDialog";
 import StudentManagement from "@/components/dashboard/StudentManagement";
+import AssignmentCreationInterface from "./AssignmentCreationInterface";
 import { useCourses } from "@/hooks/useCourses";
 
 interface TeacherSectionRendererProps {
@@ -49,16 +50,7 @@ export default function TeacherSectionRenderer({ section }: TeacherSectionRender
         </Card>
       );
     case "create-assignment":
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle>Create Assignment</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Create assignment functionality coming soon...</p>
-          </CardContent>
-        </Card>
-      );
+      return <AssignmentCreationInterface />;
     case "analytics":
       return <TeacherAnalyticsDashboard />;
     case "calendar":

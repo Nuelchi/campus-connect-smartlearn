@@ -52,8 +52,8 @@ const HeroSection = () => (
       </div>
       <div className="flex-1 flex items-center justify-center">
         <img
-          src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=600&q=80"
-          alt="Laptop with students"
+          src="/lovable-uploads/b0395cde-8a4e-4fbb-b669-f64f70ce6fbd.png"
+          alt="Students collaborating with laptops in classroom"
           className="rounded-lg shadow-2xl border-2 border-primary/10 w-full max-w-md animate-fade-in"
         />
       </div>

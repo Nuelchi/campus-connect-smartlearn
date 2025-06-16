@@ -41,10 +41,10 @@ export default function StudentQuickActions() {
       className: "bg-gradient-to-br from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700",
     },
     {
-      title: "Progress Report",
+      title: "Progress",
       description: "Track your growth",
       icon: <Award className="h-6 w-6" />,
-      onClick: () => window.location.href = "/dashboard?section=progress",
+      onClick: () => window.location.href = "/dashboard?section=grades",
       className: "bg-gradient-to-br from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700",
     },
   ];

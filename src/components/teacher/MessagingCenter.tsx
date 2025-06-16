@@ -267,7 +267,7 @@ export default function MessagingCenter() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4">
+      <div className="max-h-[500px] overflow-y-auto pr-2 space-y-4">
         {messages.length === 0 ? (
           <Card>
             <CardContent className="pt-6">

@@ -21,8 +21,6 @@ export type Database = {
           graded_by: string | null
           id: string
           student_id: string
-          submission_type: string | null
-          submission_url: string | null
           submitted_at: string
         }
         Insert: {
@@ -36,8 +34,6 @@ export type Database = {
           graded_by?: string | null
           id?: string
           student_id: string
-          submission_type?: string | null
-          submission_url?: string | null
           submitted_at?: string
         }
         Update: {
@@ -51,8 +47,6 @@ export type Database = {
           graded_by?: string | null
           id?: string
           student_id?: string
-          submission_type?: string | null
-          submission_url?: string | null
           submitted_at?: string
         }
         Relationships: [
@@ -74,8 +68,6 @@ export type Database = {
           description: string | null
           id: string
           instructions: string | null
-          lecturer_first_name: string | null
-          lecturer_last_name: string | null
           max_file_size: number | null
           max_submissions: number | null
           title: string
@@ -88,8 +80,6 @@ export type Database = {
           description?: string | null
           id?: string
           instructions?: string | null
-          lecturer_first_name?: string | null
-          lecturer_last_name?: string | null
           max_file_size?: number | null
           max_submissions?: number | null
           title: string
@@ -102,8 +92,6 @@ export type Database = {
           description?: string | null
           id?: string
           instructions?: string | null
-          lecturer_first_name?: string | null
-          lecturer_last_name?: string | null
           max_file_size?: number | null
           max_submissions?: number | null
           title?: string
@@ -168,76 +156,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      certificates: {
-        Row: {
-          certificate_number: string
-          certificate_template: string | null
-          completion_date: string
-          course_id: string
-          created_at: string
-          final_grade: number | null
-          id: string
-          is_active: boolean
-          issued_at: string
-          issued_by: string
-          notes: string | null
-          student_id: string
-          updated_at: string
-        }
-        Insert: {
-          certificate_number?: string
-          certificate_template?: string | null
-          completion_date: string
-          course_id: string
-          created_at?: string
-          final_grade?: number | null
-          id?: string
-          is_active?: boolean
-          issued_at?: string
-          issued_by: string
-          notes?: string | null
-          student_id: string
-          updated_at?: string
-        }
-        Update: {
-          certificate_number?: string
-          certificate_template?: string | null
-          completion_date?: string
-          course_id?: string
-          created_at?: string
-          final_grade?: number | null
-          id?: string
-          is_active?: boolean
-          issued_at?: string
-          issued_by?: string
-          notes?: string | null
-          student_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "certificates_course_id_fkey"
-            columns: ["course_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "certificates_issued_by_fkey"
-            columns: ["issued_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "certificates_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       conversations: {
         Row: {

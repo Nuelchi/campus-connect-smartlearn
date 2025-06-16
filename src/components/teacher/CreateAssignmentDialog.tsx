@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,6 @@ import { CalendarIcon, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { useAuth } from "@/hooks/useAuth";
 
 interface CreateAssignmentDialogProps {
   courseId: string;
@@ -21,21 +21,16 @@ export default function CreateAssignmentDialog({ courseId, onAssignmentCreated }
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [deadline, setDeadline] = useState<Date>();
-  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     instructions: "",
     maxSubmissions: 1,
     maxFileSize: 10485760, // 10MB default
-    lecturerFirstName: "",
-    lecturerLastName: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-    
     setLoading(true);
 
     try {
@@ -49,8 +44,6 @@ export default function CreateAssignmentDialog({ courseId, onAssignmentCreated }
           deadline: deadline?.toISOString(),
           max_submissions: formData.maxSubmissions,
           max_file_size: formData.maxFileSize,
-          lecturer_first_name: formData.lecturerFirstName,
-          lecturer_last_name: formData.lecturerLastName,
         });
 
       if (error) throw error;
@@ -66,8 +59,6 @@ export default function CreateAssignmentDialog({ courseId, onAssignmentCreated }
         instructions: "",
         maxSubmissions: 1,
         maxFileSize: 10485760,
-        lecturerFirstName: "",
-        lecturerLastName: "",
       });
       setDeadline(undefined);
       setIsOpen(false);
@@ -97,29 +88,6 @@ export default function CreateAssignmentDialog({ courseId, onAssignmentCreated }
           <DialogTitle>Create New Assignment</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="lecturerFirstName">Your First Name</Label>
-              <Input
-                id="lecturerFirstName"
-                value={formData.lecturerFirstName}
-                onChange={(e) => setFormData(prev => ({ ...prev, lecturerFirstName: e.target.value }))}
-                placeholder="Enter your first name"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lecturerLastName">Your Last Name</Label>
-              <Input
-                id="lecturerLastName"
-                value={formData.lecturerLastName}
-                onChange={(e) => setFormData(prev => ({ ...prev, lecturerLastName: e.target.value }))}
-                placeholder="Enter your last name"
-                required
-              />
-            </div>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="title">Assignment Title</Label>
             <Input

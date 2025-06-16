@@ -6,14 +6,14 @@ import { BookOpen, Clock, Trophy, Target, Calendar, Award } from "lucide-react";
 export default function StudentQuickActions() {
   const quickActions = [
     {
-      title: "Continue Learning",
+      title: "Courses",
       description: "Resume your courses",
       icon: <BookOpen className="h-6 w-6" />,
       onClick: () => window.location.href = "/dashboard?section=courses",
       className: "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700",
     },
     {
-      title: "Submit Assignment",
+      title: "Assignment",
       description: "Complete pending work",
       icon: <Clock className="h-6 w-6" />,
       onClick: () => window.location.href = "/dashboard?section=assignments",

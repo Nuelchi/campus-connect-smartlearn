@@ -30,7 +30,6 @@ export default function StudentDashboard() {
   return (
     <DashboardLayout 
       title="Student Dashboard" 
-      subtitle="Your path to academic excellence"
     >
       <DashboardWelcome roleSpecificMessage="Ready to unlock your potential today? 🚀" />
       

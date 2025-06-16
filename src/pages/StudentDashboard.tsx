@@ -9,7 +9,46 @@ import StudentSectionRenderer from "@/components/student/StudentSectionRenderer"
 import { useSearchParams } from "react-router-dom";
 import { useStudentAnalytics } from "@/hooks/useStudentAnalytics";
 import { Card, CardContent } from "@/components/ui/card";
+import { useEffect } from "react"; // Make sure useEffect is imported
 
+export default function StudentDashboard() {
+  const [searchParams] = useSearchParams();
+  const section = searchParams.get("section");
+  const { analytics, loading } = useStudentAnalytics();
+
+  useEffect(() => {
+    // Set the config
+    window.ChatWidgetConfig = {
+      webhook: {
+        url: 'https://nuel12.app.n8n.cloud/webhook/ed405ea8-24ba-41bd-909a-e642d219a048/chat',
+        route: 'general'
+      },
+      branding: {
+        logo: '<your company logo URL>',
+        name: 'DoxaTech.io',
+        welcomeText: 'Hi 👋, how can we help?',
+        responseTimeText: 'We typically respond right away'
+      },
+      style: {
+        primaryColor: '#854fff',
+        secondaryColor: '#6b3fd4',
+        position: 'right',
+        backgroundColor: '#ffffff',
+        fontColor: '#333333'
+      }
+    };
+
+    // Inject the script
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/gh/Nuelchi/chatbot@main/index.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    // Optional cleanup
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 export default function StudentDashboard() {
   const [searchParams] = useSearchParams();
   const section = searchParams.get("section");
@@ -67,29 +106,6 @@ export default function StudentDashboard() {
           <StudentQuickActions />
           <StudentRecentActivity />
         </div>
-          <script>
-        window.ChatWidgetConfig = {
-            webhook: {
-                url: 'https://nuel12.app.n8n.cloud/webhook/ed405ea8-24ba-41bd-909a-e642d219a048/chat',
-                route: 'general'
-            },
-            branding: {
-                logo: '<your company logo URL>',
-                name: 'DoxaTech.io', // Your company name
-                welcomeText: 'Hi 👋, how can we help?', //Welcome message
-                responseTimeText: 'We typically respond right away' //Response time message
-            },
-            style: {
-                primaryColor: '#854fff', //Primary color
-                secondaryColor: '#6b3fd4', //Secondary color
-                position: 'right', //Position of the widget (left or right)
-                backgroundColor: '#ffffff', //Background color of the chat widget
-                fontColor: '#333333' //Text color for messages and interface
-            }
-        };
-    </script>
-
-   <script src="https://cdn.jsdelivr.net/gh/Nuelchi/chatbot@main/index.js"></script>
       </div>
     </DashboardLayout>
   );

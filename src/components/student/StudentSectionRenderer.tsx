@@ -7,6 +7,7 @@ import SettingsPanel from "@/components/dashboard/SettingsPanel";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import SubmissionsList from "./SubmissionsList";
 import SubmitAssignmentPage from "./SubmitAssignmentPage";
+import AssignmentManagement from "@/components/dashboard/AssignmentManagement";
 
 interface StudentSectionRendererProps {
   section: string | null;
@@ -14,6 +15,8 @@ interface StudentSectionRendererProps {
 
 export default function StudentSectionRenderer({ section }: StudentSectionRendererProps) {
   switch (section) {
+    case "assignments":
+      return <AssignmentManagement userRole="student" />;
     case "messaging":
       return <MessagingCenterV2 />;
     case "grades":

@@ -9,7 +9,6 @@ import StudentSectionRenderer from "@/components/student/StudentSectionRenderer"
 import { useSearchParams } from "react-router-dom";
 import { useStudentAnalytics } from "@/hooks/useStudentAnalytics";
 import { Card, CardContent } from "@/components/ui/card";
-import { useEffect } from "react"; // Make sure useEffect is imported
 
 export default function StudentDashboard() {
   const [searchParams] = useSearchParams();
@@ -74,39 +73,6 @@ export default function StudentDashboard() {
           <StudentQuickActions />
           <StudentRecentActivity />
         </div>
-          useEffect(() => {
-    // Set the config
-    window.ChatWidgetConfig = {
-      webhook: {
-        url: 'https://nuel12.app.n8n.cloud/webhook/ed405ea8-24ba-41bd-909a-e642d219a048/chat',
-        route: 'general'
-      },
-      branding: {
-        logo: '<your company logo URL>',
-        name: 'DoxaTech.io',
-        welcomeText: 'Hi 👋, how can we help?',
-        responseTimeText: 'We typically respond right away'
-      },
-      style: {
-        primaryColor: '#854fff',
-        secondaryColor: '#6b3fd4',
-        position: 'right',
-        backgroundColor: '#ffffff',
-        fontColor: '#333333'
-      }
-    };
-
-    // Inject the script
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/gh/Nuelchi/chatbot@main/index.js';
-    script.async = true;
-    document.body.appendChild(script);
-
-    // Optional cleanup
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
       </div>
     </DashboardLayout>
   );

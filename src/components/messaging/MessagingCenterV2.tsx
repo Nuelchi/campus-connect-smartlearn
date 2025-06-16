@@ -145,7 +145,7 @@ export default function MessagingCenterV2() {
         </Card>
 
         {/* Chat Window */}
-        <Card className="lg:col-span-2">
+        <div className="flex-1 overflow-y-auto px-4 py-2">
           <CardContent className="p-0 h-full flex flex-col">
             {activeConversationId ? (
               <>

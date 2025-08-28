@@ -15,12 +15,6 @@ export default function StudentDashboard() {
   const section = searchParams.get("section");
   const { analytics, loading } = useStudentAnalytics();
 
-
-export default function StudentDashboard() {
-  const [searchParams] = useSearchParams();
-  const section = searchParams.get("section");
-  const { analytics, loading } = useStudentAnalytics();
-
   // If there's a section parameter, render that section
   if (section) {
     return (

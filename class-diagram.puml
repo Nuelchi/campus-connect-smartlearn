@@ -1,0 +1,350 @@
+@startuml Campus Connect SmartLearn - Class Diagram
+
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classFontStyle bold
+skinparam packageStyle rectangle
+
+package "Authentication & User Management" {
+  class useAuth {
+    +user: User
+    +session: Session
+    +profile: Profile
+    +role: Role
+    +loading: boolean
+    +signOut(): Promise<void>
+    +fetchProfile(uid: string): Promise<void>
+    +fetchRole(uid: string): Promise<void>
+  }
+  
+  class User {
+    +id: string
+    +email: string
+    +created_at: string
+  }
+  
+  class Profile {
+    +id: string
+    +full_name: string
+    +avatar_url: string
+    +bio: string
+    +created_at: string
+  }
+  
+  class UserRole {
+    +user_id: string
+    +role: "student" | "teacher" | "admin" | "user"
+  }
+}
+
+package "Course Management" {
+  class useCourses {
+    +courses: Course[]
+    +enrollments: Enrollment[]
+    +loading: boolean
+    +fetchCourses(): Promise<void>
+    +fetchEnrollments(): Promise<void>
+    +enrollInCourse(courseId: string): Promise<boolean>
+    +getEnrollmentCount(courseId: string): Promise<number>
+    +isEnrolledInCourse(courseId: string): boolean
+  }
+  
+  class Course {
+    +id: string
+    +title: string
+    +description: string
+    +instructor_id: string
+    +is_active: boolean
+    +created_at: string
+    +updated_at: string
+  }
+  
+  class Enrollment {
+    +id: string
+    +student_id: string
+    +course_id: string
+    +status: "active" | "completed" | "dropped"
+    +enrolled_at: string
+  }
+  
+  class CourseCard {
+    +course: Course
+    +enrollmentCount: number
+    +userRole: string
+    +isEnrolled: boolean
+    +onEnroll(courseId: string): void
+    +onManage(courseId: string): void
+    +handleViewCourse(): void
+    +handleMessageTeacher(): Promise<void>
+  }
+  
+  class CourseThumbnail {
+    +course: Course
+    +pdfMaterials: PDFMaterial[]
+    +onViewCourse(): void
+    +onPdfClick(pdfUrl: string): void
+  }
+  
+  class CourseStats {
+    +course: Course
+    +enrollmentCount: number
+  }
+  
+  class CourseActions {
+    +course: Course
+    +userRole: string
+    +isEnrolled: boolean
+    +onEnroll(courseId: string): void
+    +onManage(courseId: string): void
+    +onMessageTeacher(): void
+    +onViewCourse(): void
+  }
+}
+
+package "Assignment Management" {
+  class useAssignments {
+    +assignments: Assignment[]
+    +loading: boolean
+    +fetchAssignments(courseId: string): Promise<void>
+    +createAssignment(assignment: AssignmentInput): Promise<boolean>
+    +updateAssignment(id: string, updates: Partial<Assignment>): Promise<boolean>
+    +deleteAssignment(id: string): Promise<boolean>
+  }
+  
+  class Assignment {
+    +id: string
+    +course_id: string
+    +title: string
+    +description: string
+    +instructions: string
+    +deadline: string
+    +allowed_file_types: string[]
+    +max_file_size: number
+    +max_submissions: number
+    +created_at: string
+  }
+  
+  class AssignmentSubmission {
+    +id: string
+    +assignment_id: string
+    +student_id: string
+    +file_name: string
+    +file_url: string
+    +file_size: number
+    +submitted_at: string
+    +grade: number
+    +feedback: string
+    +graded_at: string
+    +graded_by: string
+  }
+  
+  class useAssignmentSubmissions {
+    +submissions: AssignmentSubmission[]
+    +loading: boolean
+    +fetchSubmissions(assignmentId: string): Promise<void>
+    +submitAssignment(submission: SubmissionInput): Promise<boolean>
+    +gradeSubmission(submissionId: string, grade: number, feedback: string): Promise<boolean>
+  }
+}
+
+package "Messaging System" {
+  class useMessages {
+    +conversations: Conversation[]
+    +messages: Message[]
+    +activeConversationId: string
+    +loading: boolean
+    +fetchConversations(): Promise<void>
+    +fetchMessages(conversationId: string): Promise<void>
+    +sendMessage(recipientId: string, content: string): Promise<void>
+    +markAsRead(messageId: string): Promise<void>
+  }
+  
+  class Message {
+    +id: string
+    +sender_id: string
+    +recipient_id: string
+    +content: string
+    +created_at: string
+    +read_at: string
+  }
+  
+  class Conversation {
+    +id: string
+    +participant1_id: string
+    +participant2_id: string
+    +last_message_at: string
+    +created_at: string
+  }
+  
+  class useWebSocketMessages {
+    +startCourseConversation(courseId: string): Promise<string>
+    +sendDirectMessage(recipientId: string, content: string): Promise<void>
+    +subscribeToMessages(callback: Function): void
+  }
+}
+
+package "Dashboard Components" {
+  class DashboardLayout {
+    +title: string
+    +subtitle: string
+    +children: ReactNode
+  }
+  
+  class DashboardRouter {
+    +user: User
+    +role: Role
+    +loading: boolean
+    +renderDashboard(): JSX.Element
+  }
+  
+  class AppSidebar {
+    +navigationItems: NavigationItem[]
+    +user: User
+    +role: Role
+    +renderNavigation(): JSX.Element
+  }
+  
+  class DashboardNavbar {
+    +title: string
+    +subtitle: string
+    +user: User
+    +notifications: Notification[]
+  }
+}
+
+package "Role-Specific Dashboards" {
+  class StudentDashboard {
+    +courses: Course[]
+    +assignments: Assignment[]
+    +grades: Grade[]
+    +renderStudentContent(): JSX.Element
+  }
+  
+  class TeacherDashboard {
+    +courses: Course[]
+    +students: Student[]
+    +assignments: Assignment[]
+    +renderTeacherContent(): JSX.Element
+  }
+  
+  class AdminDashboard {
+    +users: User[]
+    +courses: Course[]
+    +analytics: AnalyticsData
+    +renderAdminContent(): JSX.Element
+  }
+}
+
+package "Analytics & Reporting" {
+  class useStudentAnalytics {
+    +analytics: StudentAnalytics
+    +loading: boolean
+    +fetchAnalytics(studentId: string): Promise<void>
+    +getProgressData(): ProgressData
+    +getPerformanceMetrics(): PerformanceMetrics
+  }
+  
+  class useTeacherAnalytics {
+    +analytics: TeacherAnalytics
+    +loading: boolean
+    +fetchAnalytics(teacherId: string): Promise<void>
+    +getCourseStats(): CourseStats
+    +getStudentPerformance(): StudentPerformance[]
+  }
+  
+  class AnalyticsDashboard {
+    +data: AnalyticsData
+    +loading: boolean
+    +renderCharts(): JSX.Element
+    +exportData(): void
+  }
+}
+
+package "Calendar & Events" {
+  class useCalendarEvents {
+    +events: CalendarEvent[]
+    +loading: boolean
+    +fetchEvents(userId: string): Promise<void>
+    +createEvent(event: EventInput): Promise<boolean>
+    +updateEvent(id: string, updates: Partial<Event>): Promise<boolean>
+    +deleteEvent(id: string): Promise<boolean>
+  }
+  
+  class CalendarEvent {
+    +id: string
+    +title: string
+    +description: string
+    +start_time: string
+    +end_time: string
+    +user_id: string
+    +course_id: string
+    +event_type: "assignment" | "exam" | "meeting" | "other"
+  }
+}
+
+package "File Management" {
+  class useCourseMaterials {
+    +pdfMaterials: PDFMaterial[]
+    +loading: boolean
+    +fetchMaterials(courseId: string): Promise<void>
+    +uploadMaterial(file: File, courseId: string): Promise<boolean>
+    +deleteMaterial(materialId: string): Promise<boolean>
+  }
+  
+  class PDFMaterial {
+    +id: string
+    +course_id: string
+    +file_name: string
+    +file_url: string
+    +file_size: number
+    +uploaded_at: string
+    +uploaded_by: string
+  }
+}
+
+' Relationships
+useAuth --> User : manages
+useAuth --> Profile : fetches
+useAuth --> UserRole : determines
+
+useCourses --> Course : manages
+useCourses --> Enrollment : tracks
+Course --> Enrollment : has many
+Course --> User : instructor
+
+CourseCard --> Course : displays
+CourseCard --> CourseThumbnail : contains
+CourseCard --> CourseStats : shows
+CourseCard --> CourseActions : provides
+
+useAssignments --> Assignment : manages
+Assignment --> Course : belongs to
+Assignment --> AssignmentSubmission : has many
+
+useMessages --> Message : manages
+useMessages --> Conversation : manages
+Message --> Conversation : belongs to
+Message --> User : sender/recipient
+
+DashboardRouter --> useAuth : uses
+DashboardRouter --> StudentDashboard : routes to
+DashboardRouter --> TeacherDashboard : routes to
+DashboardRouter --> AdminDashboard : routes to
+
+DashboardLayout --> AppSidebar : contains
+DashboardLayout --> DashboardNavbar : contains
+
+useStudentAnalytics --> StudentDashboard : provides data
+useTeacherAnalytics --> TeacherDashboard : provides data
+useCalendarEvents --> CalendarEvent : manages
+
+useCourseMaterials --> PDFMaterial : manages
+PDFMaterial --> Course : belongs to
+
+' Inheritance/Implementation
+StudentDashboard ..|> DashboardLayout : extends
+TeacherDashboard ..|> DashboardLayout : extends
+AdminDashboard ..|> DashboardLayout : extends
+
+@enduml 

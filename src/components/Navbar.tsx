@@ -39,6 +39,9 @@ const Navbar = () => {
           Home
         </Link>
         <a href="#features" className="transition-colors hover:text-primary/70">Features</a>
+        <Link to="/faq" className={`transition-colors font-medium hover:text-primary/80 ${location.pathname === "/faq" ? "text-primary" : "text-foreground"}`}>
+          FAQ
+        </Link>
         <a href="#contact" className="transition-colors hover:text-primary/70">Contact</a>
         {user && (
           <Link to="/dashboard" className={`transition-colors font-medium hover:text-primary/80 ${location.pathname.startsWith("/dashboard") ? "text-primary" : "text-foreground"}`}>
@@ -120,6 +123,15 @@ const Navbar = () => {
             >
               Features
             </a>
+            <Link 
+              to="/faq" 
+              onClick={closeMobileMenu}
+              className={`block py-3 px-4 rounded-lg transition-colors font-medium ${
+                location.pathname === "/faq" ? "bg-primary/10 text-primary" : "hover:bg-gray-100"
+              }`}
+            >
+              FAQ
+            </Link>
             <a 
               href="#contact" 
               onClick={closeMobileMenu}

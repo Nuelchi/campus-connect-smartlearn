@@ -3,10 +3,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileText, Clock, Users } from "lucide-react";
+import { Calendar, FileText, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Tables } from "@/integrations/supabase/types";
+import SubmitAssignmentDialog from "@/components/student/SubmitAssignmentDialog";
 
 type Assignment = Tables<"assignments">;
 
@@ -17,6 +18,8 @@ interface AssignmentManagementProps {
 export default function AssignmentManagement({ userRole }: AssignmentManagementProps) {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -68,12 +71,17 @@ export default function AssignmentManagement({ userRole }: AssignmentManagementP
     setLoading(false);
   };
 
-  const handleButtonClick = () => {
+  const handleButtonClick = (assignment: Assignment) => {
     if (userRole === "teacher") {
-      window.location.href = "/dashboard?section=assignments";
+      window.location.href = `/dashboard?section=view-submissions&assignment=${assignment.id}`;
     } else {
-      window.location.href = "/dashboard?section=submit-assignment";
+      setSelectedAssignment(assignment);
+      setDialogOpen(true);
     }
+  };
+
+  const handleSubmissionSuccess = () => {
+    fetchAssignments();
   };
 
   if (loading) {
@@ -125,7 +133,7 @@ export default function AssignmentManagement({ userRole }: AssignmentManagementP
                   </div>
                 </div>
                 <div className="mt-4">
-                  <Button variant="outline" size="sm" onClick={handleButtonClick}>
+                  <Button variant="outline" size="sm" onClick={() => handleButtonClick(assignment)}>
                     {userRole === "teacher" ? "View Submissions" : "Submit Assignment"}
                   </Button>
                 </div>
@@ -134,6 +142,15 @@ export default function AssignmentManagement({ userRole }: AssignmentManagementP
           ))
         )}
       </div>
+
+      {userRole === "student" && (
+        <SubmitAssignmentDialog
+          assignment={selectedAssignment}
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onSuccess={handleSubmissionSuccess}
+        />
+      )}
     </div>
   );
 }
